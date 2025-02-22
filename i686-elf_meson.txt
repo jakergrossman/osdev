@@ -1,0 +1,12 @@
+[binaries]
+c = 'i686-elf-gcc'
+cpp = 'i686-elf-g++'
+as = 'i686-elf-as'
+windres = 'i686-elf-windres'
+strip = 'i686-elf-strip'
+
+[host_machine]
+system = 'linux'
+cpu_family = 'x86_64'
+cpu = 'x86_64'
+endian = 'little'
