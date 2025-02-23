@@ -1,5 +1,8 @@
 FROM alpine:latest AS base
 
+LABEL maintainer="jak <ahoy@jakergrossman.com>"
+LABEL description="i686-elf GCC+binutils toolchain for osdev"
+
 ENV BINUTILS_VERSION="2.44" \
     GCC_VERSION="14.2.0"\
     PKGDIR="/pkg" \
@@ -20,7 +23,6 @@ ADD https://ftp.gnu.org/gnu/gcc/gcc-$GCC_VERSION/gcc-$GCC_VERSION.tar.gz \
 RUN tar xf gcc-$GCC_VERSION.tar.gz
 
 ENV TARGET=i686-elf
-ENV PATH="${PKGDIR}/usr/local/bin:${PATH}"
 
 RUN mkdir build-binutils \
     && cd build-binutils \
@@ -29,6 +31,8 @@ RUN mkdir build-binutils \
     && make --silent -j$(nproc) \
     && make --silent DESTDIR="$PKGDIR" install
 
+# ensure binutils is available for GCC build
+ENV PATH="${PKGDIR}/usr/local/bin:${PATH}"
 RUN mkdir build-gcc \
     && cd build-gcc \
     && ../gcc-$GCC_VERSION/configure \

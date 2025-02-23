@@ -6,16 +6,8 @@ project('myos', 'c',
 add_global_arguments('-ffreestanding', '-nostdlib', language : 'c')
 add_global_link_arguments('-ffreestanding', '-nostdlib', language : 'c')
 
+subdir('src/kernel/include')
+subdir('src/libc/include')
 
-# cc = meson.get_compiler('c')
-# libgcc = cc.find_library('gcc')
-
-# bin = executable('myos.bin',
-#   'kernel.c',
-#   'boot.s',
-#   dependencies : libgcc,
-#   link_args : [ '-T', 'linker.ld' ],
-#   link_depends : 'linker.ld'
-# )
-
-subdir('src')
+subdir('src/libc')
+subdir('src/kernel')

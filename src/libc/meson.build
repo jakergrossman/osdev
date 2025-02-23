@@ -1,0 +1,35 @@
+# project('myos_libc', 'c',
+#   version : '0.1',
+#   meson_version : '>=1.4',
+#   subproject_dir : 'src',
+#   default_options : ['c_std=gnu99', 'warning_level=3', 'optimization=2'])
+
+libc_c_srcs = files(
+  'stdio/puts.c',
+  'stdio/printf.c',
+  'stdio/putchar.c',
+  'stdlib/abort.c',
+  'string/memcmp.c',
+  'string/memcpy.c',
+  'string/memmove.c',
+  'string/memset.c',
+  'string/strlen.c',
+)
+
+subdir('arch')
+
+libk = static_library('k',
+  libc_c_srcs,
+  libc_arch_c_srcs,
+  include_directories : [ libc_inc_dirs, kernel_inc_dirs ],
+  c_args : [ '-D__is_libk', ],
+)
+
+libk_dep = declare_dependency(
+  link_with : libk,
+  include_directories : [ libc_inc_dirs ]
+)
+
+libc_dep = declare_dependency(
+  include_directories : [ libc_inc_dirs ]
+)
