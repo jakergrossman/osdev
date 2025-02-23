@@ -11,7 +11,7 @@ docker build . -t osdev
 docker run --user=$(id -u):$(id -g) -it -v .:/src osdev sh
 
 # compiling
-meson setup --cross-file=i686-elf_meson.txt build
+meson setup --cross-file=i686-elf build
 meson compile -C build
 ```
 

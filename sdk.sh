@@ -48,7 +48,7 @@ case "${subcmd}" in
             -v .:/src \
             --user="$(id -u):$(id -g)" \
             -t "${TAG}" \
-            'meson setup --cross-file=i686-elf_meson.txt build --wipe'
+            'meson setup --cross-file=i686-elf build --wipe'
 
         ;;
     build)

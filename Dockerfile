@@ -3,7 +3,8 @@ FROM alpine:latest AS base
 LABEL maintainer="jak <ahoy@jakergrossman.com>"
 LABEL description="i686-elf GCC+binutils toolchain for osdev"
 
-ENV BINUTILS_VERSION="2.44" \
+ENV TARGET="i686-elf" \ 
+    BINUTILS_VERSION="2.44" \
     GCC_VERSION="14.2.0"\
     PKGDIR="/pkg" \
     PREFIX="/usr/local"
@@ -21,8 +22,6 @@ RUN tar xf binutils-$BINUTILS_VERSION.tar.gz
 ADD https://ftp.gnu.org/gnu/gcc/gcc-$GCC_VERSION/gcc-$GCC_VERSION.tar.gz \
     gcc-$GCC_VERSION.tar.gz
 RUN tar xf gcc-$GCC_VERSION.tar.gz
-
-ENV TARGET=i686-elf
 
 RUN mkdir build-binutils \
     && cd build-binutils \
@@ -46,5 +45,6 @@ RUN mkdir build-gcc \
 FROM base AS sdk
 
 COPY --from=build "$PKGDIR"/usr/local /usr/local
+COPY meson/$TARGET.cross /usr/local/share/meson/cross/$TARGET
 WORKDIR /src
 ENTRYPOINT ["/bin/sh", "-c"]
