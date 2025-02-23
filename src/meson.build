@@ -1,2 +1,0 @@
-subdir('kernel')
-#subdir('libc')
