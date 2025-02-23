@@ -1,4 +1,4 @@
-project('myos', 'c',
+project('denton', 'c',
   version : '0.1',
   meson_version : '>=1.4',
   default_options : ['c_std=gnu99', 'warning_level=3', 'optimization=2'])

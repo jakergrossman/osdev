@@ -1,9 +1,3 @@
-# project('myos_libc', 'c',
-#   version : '0.1',
-#   meson_version : '>=1.4',
-#   subproject_dir : 'src',
-#   default_options : ['c_std=gnu99', 'warning_level=3', 'optimization=2'])
-
 libc_c_srcs = files(
   'stdio/puts.c',
   'stdio/printf.c',
