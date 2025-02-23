@@ -7,6 +7,6 @@ strip = 'i686-elf-strip'
 
 [host_machine]
 system = 'linux'
-cpu_family = 'x86_64'
-cpu = 'x86_64'
+cpu_family = 'i386'
+cpu = 'i386'
 endian = 'little'
