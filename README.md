@@ -29,7 +29,7 @@ A script `sdk.sh` is provided for convenience. Most subcommands
 can be executed inside or outside of the Docker VM and the appropriate
 action is taken accordingly.
 
-```sh
+```
 Usage: sdk.sh [options] [subcmd]
 
 Options:
@@ -47,4 +47,14 @@ Subcommands:
   iso:      Generate an ISO image from the generated sysroot
   qemu:     Run the generated ISO with qemu-system-i386
   help:     Print this help and exit
+```
+
+```sh
+# from 0 to QEMU on the the build machine
+./sdk.sh docker
+./sdk.sh setup
+./sdk.sh build
+./sdk.sh sysroot
+./sdk.sh iso
+./sdk.sh qemu
 ```
