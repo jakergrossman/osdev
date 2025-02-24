@@ -2,11 +2,6 @@
    designated at the entry point. */
 ENTRY(_start)
 
-MEMORY
-{
-	ROM (rx) : ORIGIN = 0x00100000, LENGTH = 256K
-}
-
 /* Tell where the various sections of the object files will be put in the final
    kernel image. */
 SECTIONS
@@ -18,30 +13,38 @@ SECTIONS
 	/* First put the multiboot header, as it is required to be put very early
 	   early in the image or the bootloader won't recognize the file format.
 	   Next we'll put the .text section. */
-	.text BLOCK(4K) : ALIGN(4K)
+	.text : ALIGN(4K)
 	{
-		*(.multiboot)
-		*(.text)
-	} > ROM
+		_TEXT_START_ = .;
+		*(.multiboot*)
+		*(.text*)
+		_TEXT_END_ = .;
+	}
 
 	/* Read-only data. */
-	.rodata BLOCK(4K) : ALIGN(4K)
+	.rodata : ALIGN(4K)
 	{
-		*(.rodata)
-	} > ROM
+		_RODATA_START_ = .;
+		*(.rodata.*)
+		_RODATA_END_ = .;
+	}
 
 	/* Read-write data (initialized) */
-	.data BLOCK(4K) : ALIGN(4K)
+	.data : ALIGN(4K)
 	{
-		*(.data)
-	} > ROM
+		_DATA_START_ = .;
+		*(.data*)
+		_DATA_END_ = .;
+	}
 
 	/* Read-write data (uninitialized) and stack */
-	.bss BLOCK(4K) : ALIGN(4K)
+	.bss : ALIGN(4K)
 	{
-		*(COMMON)
-		*(.bss)
-	} > ROM
+		_BSS_START_ = .;
+		*(COMMON*)
+		*(.bss*)
+		_BSS_END_ = .;
+	}
 
 	/* The compiler may produce other sections, put them in the proper place in
 	   in this file, if you'd like to include them in the final kernel. */

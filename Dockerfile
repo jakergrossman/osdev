@@ -11,7 +11,7 @@ ENV TARGET="i686-elf" \
 
 RUN apk add --no-cache --virtual .deps \
     curl file gcc make musl-dev build-base \
-    mpc1-dev gmp-dev mpfr-dev meson
+    mpc1-dev gmp-dev mpfr-dev meson grub mtools xorriso
 
 FROM base AS build
 
@@ -44,7 +44,9 @@ RUN mkdir build-gcc \
 
 FROM base AS sdk
 
+ENV __OSDEV_ENV__=1
+
 COPY --from=build "$PKGDIR"/usr/local /usr/local
 COPY meson/$TARGET.cross /usr/local/share/meson/cross/$TARGET
 WORKDIR /src
-ENTRYPOINT ["/bin/sh", "-c"]
+#ENTRYPOINT ["/bin/sh", "-c"]

@@ -1,0 +1,6 @@
+set timeout=5
+
+menuentry "denton" {
+	multiboot @KERNEL_IMAGE_PATH@
+	boot
+}
