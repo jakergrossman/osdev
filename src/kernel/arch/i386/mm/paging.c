@@ -6,7 +6,11 @@
 #include <denton/types.h>
 #include <denton/panic.h>
 #include <denton/memsize.h>
+#include <denton/klog.h>
+#include <denton/tty.h>
+#include <denton/mm/bootmem.h>
 
+#include <denton/tty.h>
 #include <asm/paging.h>
 #include <asm/types.h>
 #include <asm/memlayout.h>
@@ -53,19 +57,26 @@ void paging_flush_tlb(void)
 
 void paging_setup_kernelspace(void)
 {
+    bool pse = cpuid_has_pse();
+    bool pge = cpuid_has_pge();
 
     uint32_t cr4 = cpu_read_cr4();
-    if (cpuid_has_pse()) {
+    if (pse) {
         cr4 |= CPU_CR4_PSE;
     }
-    if (cpuid_has_pge()) {
+    if (pge) {
         cr4 |= CPU_CR4_GLB;
     }
     cpu_write_cr4(cr4);
 
+    klog_trace("PSE: %s, PGE: %s\n", pse ? "yes" : "no", pge ? "yes" : "no");
+
     paging_setup_kernel_pgdir();
     paging_set_directory(v_to_p(&__kernel_pgdir));
     paging_flush_tlb();
+
+	// FIXME:
+	terminal_update_base(INIT_VGA);
 }
 
 void paging_set_directory(physaddr_t phys)

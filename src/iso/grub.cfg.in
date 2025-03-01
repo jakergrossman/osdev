@@ -1,6 +1,6 @@
 set timeout=5
 
-menuentry "denton" "hih" {
-	multiboot @KERNEL_IMAGE_PATH@
+menuentry "denton" {
+	multiboot @KERNEL_IMAGE_PATH@ "no, there is here though"
 	boot
 }

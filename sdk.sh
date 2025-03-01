@@ -148,6 +148,7 @@ case "${subcmd}" in
             -no-reboot \
             -no-shutdown \
             -serial stdio \
+            -vga virtio \
             -D qemu.log \
             -cdrom build/denton.iso
         ;;

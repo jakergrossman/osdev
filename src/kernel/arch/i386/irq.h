@@ -1,27 +1,10 @@
 #ifndef _I386_IDT_H
 #define _I386_IDT_H
 
+#include "denton/types.h"
 #include <denton/compiler.h>
 
 #include <stdint.h>
-enum idt32_gate {
-    IDT32_GATE_TASK = 0x5,
-    IDT32_GATE_IRQ16 = 0x6,
-    IDT32_GATE_TRAP16 = 0x7,
-    IDT32_GATE_IRQ32 = 0x8,
-    IDT32_GATE_TRAP32 = 0x9,
-};
-
-
-struct idt_entry {
-    uint16_t physbase_low;
-    uint16_t code_segment;
-    uint8_t  reserved;
-    enum idt32_gate gate_type : 4;
-    uint8_t priviledge : 2;
-    uint8_t present : 1;
-    uint16_t physbase_high;
-} __packed;
 
 struct irq_frame {
     uint32_t edi, esi, ebp, oesp, ebx, edx, ecx, eax;
@@ -51,6 +34,6 @@ struct irq_handler {
 };
 
 void idt_init(void);
-void idt_flush(void);
+void idt_flush(physaddr_t phys);
 
 #endif

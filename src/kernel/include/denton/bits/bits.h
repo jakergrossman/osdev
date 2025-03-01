@@ -37,10 +37,10 @@
 #endif
 
 #define GENMASK(h, l) \
-	(GENMASK_INPUT_CHECK(h, l) + __GENMASK(h, l))
+	(__GENMASK_INPUT_CHECK(h, l) + __GENMASK(h, l))
 
 #define GENMASK_ULL(h, l) \
-	(GENMASK_INPUT_CHECK(h, l) + __GENMASK_ULL(h, l))
+	(__GENMASK_INPUT_CHECK(h, l) + __GENMASK_ULL(h, l))
 
 #define BIT(nr)             (1UL << (nr))
 #define BIT_MASK(width)     (1UL << ((nr) & __BITS_PER_LONG))

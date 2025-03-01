@@ -19,6 +19,21 @@ enum {
     PAGE_ENTRIES = 1024,
 };
 
+typedef uint32_t pfn_t;
+
+static inline pfn_t
+__physaddr_to_pfn(physaddr_t phys)
+{
+	return (pfn_t)(phys >> PAGE_SHIFT);
+}
+
+/* Align to a power of two */
+#define ALIGN_2(v, a) ((typeof(v))(((uintptr_t)(v) + (a) - 1) & ~(a - 1)))
+#define PAGE_ALIGN(v) ALIGN_2(v, PAGE_SIZE)
+
+#define ALIGN_2_DOWN(v, a) ((typeof(v))(((uintptr_t)(v) & ~(a - 1))))
+#define PAGE_ALIGN_DOWN(v) ALIGN_2_DOWN(v, PAGE_SIZE)
+
 typedef union page_direntry {
     uint32_t word;
     struct {
@@ -49,7 +64,7 @@ typedef union page_entry {
         uint32_t dirty      : 1;
         uint32_t pat        : 1;
         uint32_t global     : 1;
-        uint32_t reserved   : 7;
+        uint32_t reserved   : 3;
         uint32_t frame_addr : 20;
     } bits;
 } page_entry_t;

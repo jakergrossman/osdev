@@ -37,6 +37,14 @@ struct multiboot_elf_section_header_table {
     uint32_t shndx;
 };
 
+enum multiboot_memmap_type {
+	MB_MEMMAP_AVAIL = 1,
+	MB_MEMMAP_RESERVED,
+	MB_MEMMAP_ACPI_RECLAIMABLE,
+	MB_MEMMAP_ACPI_NVS,
+	MB_MEMMAP_ACPI_BADRAM,
+};
+
 struct multiboot_memmap {
     uint32_t size;
     uint64_t base_addr;

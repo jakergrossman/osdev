@@ -1,5 +1,6 @@
 #include <denton/klog.h>
 #include <denton/kmain.h>
+#include <denton/kparam.h>
 #include <denton/tty.h>
 #include <denton/panic.h>
 #include <denton/multiboot.h>
@@ -28,6 +29,7 @@ add_multiboot_memory_region(uint64_t start, size_t length)
 		length = INT_MAX - start;
 	}
 
+
 	bootmem_add(start, length);
 }
 
@@ -41,18 +43,15 @@ handle_multiboot_info(struct multiboot_info* info)
 	if ((info->flags & MBF_INFO_CMDLINE) && (*info->cmdline)) {
 		/* don't overflow */
 		info->cmdline[sizeof(__kernel_cmdline)-1] = 0;
-		strcpy(__kernel_cmdline, info->cmdline);
-		klog(KLOG_INFO, "cmdline: %s\n", __kernel_cmdline);
+		char* cmdp = (char*)((uintptr_t)__kernel_cmdline - __KERNEL_VIRTBASE);
+		strcpy(cmdp, info->cmdline);
 	}
 
 	struct multiboot_memmap* mmap = p_to_v(info->mmap_addr);
 
 	while (V2P(mmap) < info->mmap_addr + info->mmap_length) {
-		if (mmap->type == 1) {
-			uint32_t start = mmap->base_addr;
-			uint32_t end = start + mmap->length;
-			klog_info("start: %x, end: %x\n", start, end);
-			add_multiboot_memory_region(start, end);
+		if (mmap->type == MB_MEMMAP_AVAIL) {
+			add_multiboot_memory_region(mmap->base_addr, mmap->length);
 		}
 		mmap = (struct multiboot_memmap*)((uint32_t)mmap + mmap->size + sizeof(uint32_t));
 	}
@@ -64,8 +63,9 @@ void cmain(uint32_t magic, struct multiboot_info* mb_info)
 
 	terminal_initialize(EARLY_BOOT_VGA);
 
-	klog_info("denton booting...\n");
-	klog_info("kernel physical location: 0x%X-0x%X\n", V2P(&__KERNEL_START), V2P(&__KERNEL_END));
+	klog_info("==< DENTON BOOTING ===\n");
+	klog_info("kernel physical location: 0x%08X-0x%08X\n", V2P(&__KERNEL_START), V2P(&__KERNEL_END));
+	klog_info("kernel virtual  location: 0x%08X-0x%08X\n", &__KERNEL_START, &__KERNEL_END);
 
 	if (magic == MULTIBOOT_BOOTLOADER_MAGIC) {
 		handle_multiboot_info(mb_info);
@@ -73,16 +73,15 @@ void cmain(uint32_t magic, struct multiboot_info* mb_info)
 		panic("bad magic");
 	}
 
-	klog_trace("setting up kernelspace paging...\n");
 	paging_setup_kernelspace();
-	// FIXME:
-	terminal_update_base(INIT_VGA);
 
-	klog_trace("setting bootmem physical allocator...\n");
-	klog_trace("setting kmalloc...\n");
-	klog_trace("setting pic8259...\n");
-	klog_trace("setting pic8259 timer...\n");
-	klog_trace("reading RTC...\n");
+	kernel_cmdline_init(__kernel_cmdline);
+
+	// klog_trace("setting bootmem physical allocator...\n");
+	// klog_trace("setting kmalloc...\n");
+	// klog_trace("setting pic8259...\n");
+	// klog_trace("setting pic8259 timer...\n");
+	// klog_trace("reading RTC...\n");
 
 	kmain();
 }

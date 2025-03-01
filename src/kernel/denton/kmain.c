@@ -1,8 +1,12 @@
-#include <stdio.h>
-
 #include <denton/bits.h>
 #include <denton/tty.h>
 #include <denton/klog.h>
+#include <denton/list.h>
+
+struct node {
+	struct list_head head;
+	int val;
+};
 
 /**
  * paging setup on entry to kmain:
