@@ -3,11 +3,14 @@ libc_c_srcs = files(
   'stdio/printf.c',
   'stdio/putchar.c',
   'stdlib/abort.c',
+  'stdlib/rand.c',
+  'stdlib/strtol.c',
   'string/memcmp.c',
   'string/memcpy.c',
   'string/memmove.c',
   'string/memset.c',
   'string/strlen.c',
+  'string/strcpy.c',
 )
 
 subdir('arch')

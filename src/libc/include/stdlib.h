@@ -11,11 +11,17 @@ extern "C" {
 __attribute__((__noreturn__))
 void abort(void);
 
+int rand(void);
+void srand(unsigned int seed);
+
 #ifdef __cplusplus
 #define NULL nullptr
 #else
 #define NULL ((void*)0)
 #endif
+
+long int strtol(const char* str, char** endptr, int base);
+long int strtoul(const char* str, char** endptr, int base);
 
 /* Allocate @__size bytes of memory */
 extern void* malloc(size_t __size)
