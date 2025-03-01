@@ -19,6 +19,7 @@
 #define __packed        __atr(packed)
 #define __maybe_unused  __atr(unused)
 #define __used          __atr(unused)
+#define __must_check    __attribute__((warn_unused))
 
 #define __kernel        __atr(address_space(0))
 #define __user          __atr((noderef, address_space(__user)))

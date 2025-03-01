@@ -3,4 +3,6 @@
 
 typedef __SIZE_TYPE__ size_t;
 
+typedef typeof((int*)0 - (int*)0) ptrdiff_t;
+
 #endif

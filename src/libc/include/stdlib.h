@@ -20,8 +20,9 @@ void srand(unsigned int seed);
 #define NULL ((void*)0)
 #endif
 
-long int strtol(const char* str, char** endptr, int base);
-long int strtoul(const char* str, char** endptr, int base);
+long strtol(const char* str, char** endptr, int base);
+long strntol(const char* str, size_t maxlen, char** endptr, int base);
+unsigned long strtoul(const char* str, char** endptr, int base);
 
 /* Allocate @__size bytes of memory */
 extern void* malloc(size_t __size)

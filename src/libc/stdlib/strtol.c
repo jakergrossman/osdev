@@ -1,8 +1,10 @@
+#include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <stdlib.h>
 
-long int strtol(const char* str, char** endptr, int base)
+long strntol(const char* str, size_t len, char** endptr, int base)
 {
 	if (base > 16) {
 		return -1;
@@ -17,9 +19,14 @@ long int strtol(const char* str, char** endptr, int base)
 		return 0;
 	}
 
+	if ((ptr - str) >= len) {
+		*endptr = (char*)str + len;
+		return -1;
+	}
+
 	static const char map[] = "01234567890abcdef";
 	int acc = 0;
-	while (ptr && *ptr && isxdigit(*ptr)) {
+	while (((ptr - str) < len) && ptr && *ptr && isxdigit(*ptr)) {
 		int digit = tolower(*ptr);
 		int value = 0;
 		while (map[value] != digit) {
@@ -40,4 +47,14 @@ long int strtol(const char* str, char** endptr, int base)
 	return is_negative ? -acc : acc;
 }
 
-long int strtoul(const char* str, char** endptr, int base);
+long strtol(const char* str, char** endptr, int base)
+{
+	return strntol(str, SIZE_MAX, endptr, base);
+}
+
+unsigned long strtoul(const char* str, char** endptr, int base);
+
+unsigned int atoi(const char* str)
+{
+	return (int)strtol(str, NULL, 10);
+}

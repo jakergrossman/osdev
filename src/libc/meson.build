@@ -1,17 +1,13 @@
-libc_c_srcs = files(
-  'stdio/puts.c',
-  'stdio/printf.c',
-  'stdio/putchar.c',
-  'stdlib/abort.c',
-  'stdlib/rand.c',
-  'stdlib/strtol.c',
-  'string/memcmp.c',
-  'string/memcpy.c',
-  'string/memmove.c',
-  'string/memset.c',
-  'string/strlen.c',
-  'string/strcpy.c',
-)
+libc_c_srcs = []
+
+subdir('stdio')
+libc_c_srcs += libc_c_stdio_srcs
+
+subdir('stdlib')
+libc_c_srcs += libc_c_stdlib_srcs
+
+subdir('string')
+libc_c_srcs += libc_c_string_srcs
 
 subdir('arch')
 
