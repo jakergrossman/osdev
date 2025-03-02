@@ -30,7 +30,7 @@ add_multiboot_memory_region(uint64_t start, size_t length)
 	}
 
 
-	bootmem_add(start, length);
+	bootmem_add(start, start+length);
 }
 
 static void
@@ -76,9 +76,7 @@ void cmain(uint32_t magic, struct multiboot_info* mb_info)
 	paging_setup_kernelspace();
 
 	kernel_cmdline_init(__kernel_cmdline);
-
-	// klog_trace("setting bootmem physical allocator...\n");
-	// klog_trace("setting kmalloc...\n");
+	bootmem_setup_pga();
 	// klog_trace("setting pic8259...\n");
 	// klog_trace("setting pic8259 timer...\n");
 	// klog_trace("reading RTC...\n");

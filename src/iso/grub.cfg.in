@@ -1,4 +1,4 @@
-set timeout=5
+set timeout=0
 
 menuentry "denton" {
 	multiboot @KERNEL_IMAGE_PATH@ "no, there is here though"

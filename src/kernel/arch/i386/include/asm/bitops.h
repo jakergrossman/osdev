@@ -1,21 +1,39 @@
 #ifndef __DENTON_ARCH_I386_ASM_BITOPS_H
 #define __DENTON_ARCH_I386_ASM_BITOPS_H
 
-#include <denton/bits.h>
 #include <denton/math.h>
+#include "denton/compiler.h"
 #include "rmwcc.h"
 
 #include <asm/barrier.h>
 #include <asm/asm.h>
+#include <denton/bits/bits.h>
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #define RLONG_ADDR(x)  "m" (*(volatile long *)(x))
 #define WBYTE_ADDR(x) "+m" (*(volatile char *)(x))
 
 #define CONST_MASK_ADDR(nr, addr) WBYTE_ADDR((void*)(addr) + ((nr) >> 3))
 #define CONST_MASK(nr) (1 << ((nr) & 7))
+
+static __always_inline bool
+test_bit(long nr, volatile void* addr)
+{
+	volatile uint32_t* p = addr;
+	if (__builtin_constant_p(nr)) {
+		return ((1UL << (nr & 31)) & (p[nr >> 5])) != 0;
+	} else {
+		bool is_set;
+		asm volatile("btl %2,%1" CC_SET(c)
+			: CC_OUT(c) (is_set)
+			: "m" (*p), "Ir" (nr)
+		);
+		return is_set;
+	}
+}
 
 
 /**

@@ -16,7 +16,7 @@
 #ifndef _KERNEL_1386_ASM_FINDBIT_H
 #define _KERNEL_1386_ASM_FINDBIT_H
 
-#include "bitops.h"
+#include <asm/bitops.h>
 
 /*
  * Common helper for find_bit() function family
@@ -31,7 +31,7 @@
 	for (idx = 0; idx * __BITS_PER_LONG < sz; idx++) {			\
 		val = (FETCH);							\
 		if (val) {							\
-			sz = min(idx * __BITS_PER_LONG + __ffs(MUNGE(val)), sz);	\
+			sz = kmin(idx * __BITS_PER_LONG + __ffs(MUNGE(val)), sz);	\
 			break;							\
 		}								\
 	}									\
@@ -62,7 +62,7 @@
 		idx++;								\
 	}									\
 										\
-	sz = min(idx * __BITS_PER_LONG + __ffs(MUNGE(tmp)), sz);			\
+	sz = kmin(idx * __BITS_PER_LONG + __ffs(MUNGE(tmp)), sz);			\
 out:										\
 	sz;									\
 })
