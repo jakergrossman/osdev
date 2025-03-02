@@ -2,6 +2,7 @@
 #include "denton/heap.h"
 #include "denton/mm/pga.h"
 #include "denton/panic.h"
+#include <limits.h>
 #include <denton/bits.h>
 #include <denton/tty.h>
 #include <denton/klog.h>
@@ -17,5 +18,11 @@ void kmain(void)
 {
 	// for now, update terminal base now that we are using the kernel pgdir
 	terminal_update_base(INIT_VGA);
-	klog_debug("timer: %d\n", timer_get_ticks());
+	while(1) {
+		for (int i = 0; i < 80; i++) {
+			printf("%c", (rand() > INT_MAX/2) ? '@' : '.');
+		}
+		terminal_flush();
+		for (volatile int i = 0; i < 0xFFFFFF; i++);
+	}
 }
