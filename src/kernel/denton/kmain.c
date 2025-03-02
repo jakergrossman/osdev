@@ -22,7 +22,6 @@ void kmain(void)
 	struct page* p3 = page_alloc(8, 0);
 	struct page* p4 = page_alloc(4, 0);
 
-	// terminal_clear();
 	klog_info("P1Virtual: 0x%08X\n", p1->virt);
 	klog_info("P2Virtual: 0x%08X\n", p2->virt);
 	klog_info("P3Virtual: 0x%08X\n", p3->virt);

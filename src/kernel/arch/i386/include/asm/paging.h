@@ -19,14 +19,6 @@ enum {
     PAGE_ENTRIES = 1024,
 };
 
-typedef uint32_t pfn_t;
-
-static inline pfn_t
-__physaddr_to_pfn(physaddr_t phys)
-{
-	return (pfn_t)(phys >> PAGE_SHIFT);
-}
-
 /* Align to a power of two */
 #define ALIGN_2(v, a) ((typeof(v))(((uintptr_t)(v) + (a) - 1) & ~(a - 1)))
 #define PAGE_ALIGN(v) ALIGN_2(v, PAGE_SIZE)

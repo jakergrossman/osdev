@@ -1,14 +1,15 @@
-#include "asm/bitops.h"
-#include "asm/findbit.h"
-#include "asm/paging.h"
-#include "denton/atomic.h"
-#include "denton/bits/bits.h"
-#include "denton/panic.h"
-#include "denton/types.h"
 #include <denton/mm/pga.h>
 #include <denton/mm/bootmem.h>
+#include <denton/atomic.h>
+#include <denton/bits/bits.h>
+#include <denton/types.h>
 #include <denton/klog.h>
 #include <denton/bits.h>
+
+#include <asm/bitops.h>
+#include <asm/findbit.h>
+#include <asm/paging.h>
+
 #include <string.h>
 #include <stdlib.h>
 
@@ -66,12 +67,13 @@ void page_alloc_init(size_t pages, memory_t* memregions, size_t num_regions)
 		physaddr_t start = PAGE_ALIGN(memregions[i].start);
 		physaddr_t end = PAGE_ALIGN_DOWN(memregions[i].end_ex);
 
+		klog_debug("Adding range [%d,%d] to allocator\n", start / PAGE_SIZE, end / PAGE_SIZE);
 		for (physaddr_t loc = start; loc < end; loc += PAGE_SIZE) {
 			struct page* p = page_from_phys(loc);
 
 			/* all unused bootmem marked valid and available */
 			clr_bit(PAGE_INVALID, &p->flags);
-			__page_mark_free(__physaddr_to_pfn(loc));
+			__page_mark_free(pfn_from_physaddr(loc));
 		}
 	}
 }

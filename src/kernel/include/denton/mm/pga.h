@@ -10,6 +10,14 @@
 #include <asm/paging.h>
 #include <asm/memlayout.h>
 
+typedef uint32_t pfn_t;
+
+static inline pfn_t
+pfn_from_physaddr(physaddr_t phys)
+{
+	return (pfn_t)(phys >> PAGE_SHIFT);
+}
+
 struct page {
 	atomic_t use_count;
 	pfn_t page_number;
@@ -32,7 +40,7 @@ struct page* page_from_pfn(pfn_t pfn);
 static __always_inline struct page*
 page_from_phys(physaddr_t phys)
 {
-	return page_from_pfn(__physaddr_to_pfn(phys));
+	return page_from_pfn(pfn_from_physaddr(phys));
 }
 
 static __always_inline struct page*

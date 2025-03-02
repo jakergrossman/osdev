@@ -91,7 +91,6 @@ void terminal_putchar(char c) {
 		default:
 			terminal_putentryat(uc, terminal_color, terminal_column, terminal_row);
 			if (++terminal_column == VGA_WIDTH) {
-				abort();
 				terminal_column = 0;
 				if (++terminal_row == VGA_HEIGHT) {
 					terminal_scroll(1);

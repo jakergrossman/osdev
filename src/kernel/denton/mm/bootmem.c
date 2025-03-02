@@ -42,7 +42,7 @@ bootmem_add(uint64_t start, uint64_t end)
 	/* keep track of the highest page of physical memory
 	 * so we know how much we have for the page allocator
 	 */
-	pfn_t last_page = __physaddr_to_pfn(end);
+	pfn_t last_page = pfn_from_physaddr(end);
 	highest_page = kmax(highest_page, last_page);
 
 	/* check if this region overlaps with kernel, and exclude

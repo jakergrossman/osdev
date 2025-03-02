@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#include <denton/tty.h>
+
 enum klog_level {
     KLOG_TRACE,
     KLOG_DEBUG,
@@ -14,8 +16,10 @@ enum klog_level {
 };
 
 
-#define klog(level, fmt, ...) \
-    printf("[ 0.000000 ] %s: " fmt, __func__ __VA_OPT__(,) __VA_ARGS__)
+#define klog(level, fmt, ...) ({\
+    printf("0.000000 [%s]: " fmt, __func__ __VA_OPT__(,) __VA_ARGS__); \
+	terminal_flush(); \
+})
 
 #define klog_trace(...) klog(KLOG_TRACE, __VA_ARGS__)
 #define klog_debug(...) klog(KLOG_DEBUG, __VA_ARGS__)
