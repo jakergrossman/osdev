@@ -2,6 +2,22 @@
 #define __DENTON_ARCH_I386_ASM_CPU_H
 
 #include <denton/stringify.h>
+#include <asm/gdt.h>
+
+
+struct task;
+
+struct cpu_info {
+    int cpu_id;
+    int intr_count;
+
+    struct gdt_entry gdt_entries[GDT_ENTRIES];
+
+    /* self reference pointer is handy to stuff into per-cpu GDT variable */
+    struct cpu_info* self;
+};
+
+void cpu_early_init(void);
 
 /*
  * Volatile isn't enough to prevent the compiler from reordering the

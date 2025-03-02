@@ -2,12 +2,19 @@
 #define __DENTON_ARCH_I386_ASM_HALT_H
 
 #include <denton/compiler.h>
+#include <denton/types.h>
 #include <stdint.h>
 
 static __always_inline void cli(void)
 {
     asm volatile ( "cli" );
 }
+
+static __always_inline void sti(void)
+{
+    asm volatile ( "sti" );
+}
+
 
 static __always_inline void hlt(void)
 {
@@ -57,6 +64,21 @@ eflags_write(uint32_t flags)
 		:
 		: "a" (flags)
 	);
+}
+
+static __always_inline uint32_t
+xchg(virtaddr_t addr, uint32_t val)
+{
+	volatile uint32_t* ptr = addr;
+	uint32_t result;
+
+	asm volatile(
+		"lock; xchgl %0, %1"
+		: "+m" (*ptr), "=a" (result)
+		: "1" (val)
+		: "cc", "memory"
+	);
+	return result;
 }
 
 

@@ -1,3 +1,5 @@
+#include <asm/memlayout.h>
+
 	.globl irq_handler
 irq_handler:
 	pushl %ds
@@ -58,3 +60,28 @@ irq_hands:
 	irq_labelN %i
 	.set i, i+1
 .endr
+
+; .global __gdt_flush
+.type gdt_flush, @function
+___gdt_flush:
+	cli
+	# get the pointer to the GDT
+	movl 4(%ebp), %eax
+	lgdt (%eax)
+
+	ljmp $0x08, $flush
+flush:
+
+	movw $0x10, %ax
+	movw %ax, %ds
+	movw %ax, %es
+	movw %ax, %fs
+	movw %ax, %gs
+	movw %ax, %ss
+	popl %ebp
+	ret
+
+.global __get_gdt
+__get_gdt:
+	sgdt (%eax)
+	ret

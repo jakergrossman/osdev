@@ -9,9 +9,11 @@
 #include <denton/mm/bootmem.h>
 
 #include <asm/cpuid.h>
+#include <asm/cpu.h>
 #include <asm/memlayout.h>
 #include <asm/paging.h>
 #include <asm/drivers/pic8259.h>
+#include <asm/instr.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -64,6 +66,8 @@ void cmain(uint32_t magic, struct multiboot_info* mb_info)
 {
 	cpuid_init();
 
+	cpu_early_init();
+
 	terminal_initialize(EARLY_BOOT_VGA);
 
 	klog_info("==< DENTON BOOTING >==\n");
@@ -91,6 +95,8 @@ void cmain(uint32_t magic, struct multiboot_info* mb_info)
 	/* setup interrupt controller */
 	pic8259_init();
 	pic8259_timer_init();
+
+	sti();
 
 	kmain();
 }

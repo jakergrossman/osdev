@@ -2,13 +2,12 @@
 #include "denton/panic.h"
 #include <denton/klog.h>
 #include <denton/atomic.h>
+#include <denton/spinlock.h>
 #include <asm/drivers/pic8259.h>
 
 #include <asm/irq.h>
 #include <asm/timer.h>
 #include <asm/instr.h>
-
-static atomic32_t system_tick;
 
 enum pic8259_register {
 	PIC8259_TIMER_IOBASE = 0x40,
@@ -28,6 +27,8 @@ enum pic8259_register {
 #define PIC8259_READ_ISR 0x0B
 
 static uint16_t irqmask = 0xFFF & ~(1UL<<PIC8259_IRQ_SLAVE);
+static spinlock_t irqmask_lock = SPINLOCK_INIT();
+static atomic32_t system_tick;
 
 static void pic_master_set_mask(void)
 {
@@ -46,20 +47,25 @@ static void timer_callback(struct irq_frame* frame, void* privdata)
 
 void pic8259_init(void)
 {
+	/* remap PIC1 to IRQ32 and PIC2 at IRQ40 */
 	outb(PIC8259_IO_PIC1 + 1, 0xFF);
 	outb(PIC8259_IO_PIC2 + 1, 0xFF);
 
+	// restart PIC
 	outb(PIC8259_IO_PIC1, 0x11);
 	outb(PIC8259_IO_PIC2, 0x11);
 
+	// PIC1 now starts at PIC8259_IRQ0
 	outb(PIC8259_IO_PIC1 + 1, PIC8259_IRQ0);
+	// PIC2 now starts at PIC8259_IRQ8
 	outb(PIC8259_IO_PIC2 + 1, PIC8259_IRQ0 + 8);
 
+	// setup cascading
 	outb(PIC8259_IO_PIC1 + 1, 1 << PIC8259_IRQ_SLAVE);
 	outb(PIC8259_IO_PIC2 + 1, PIC8259_IRQ_SLAVE);
 
 	outb(PIC8259_IO_PIC1 + 1, 0x01);
-	outb(PIC8259_IO_PIC2 + 1, 0x01);
+	outb(PIC8259_IO_PIC2 + 1, 0x01); // done!
 
 	pic_master_set_mask();
 	pic_slave_set_mask();
@@ -85,18 +91,24 @@ void pic8259_timer_init(void)
 
 void pic8259_enable_irq(int irqno)
 {
-	// TODO: spinlock
+	spin_lock(&irqmask_lock);
+
 	irqmask &= ~BIT(irqno);
 	pic_master_set_mask();
 	pic_slave_set_mask();
+
+	spin_unlock(&irqmask_lock);
 }
 
 void pic8259_disable_irq(int irqno)
 {
-	// TODO: spinlock
+	spin_lock(&irqmask_lock);
+
 	irqmask |= BIT(irqno);
 	pic_master_set_mask();
 	pic_slave_set_mask();
+
+	spin_unlock(&irqmask_lock);
 }
 
 static uint8_t
@@ -116,10 +128,11 @@ pic8259_read_slave_isr(void)
 
 void pic8259_send_eoi(int irq)
 {
-	// TODO: spinlock
+	spin_lock(&irqmask_lock);
 	if (irq >= 8) {
+
 		uint8_t isr = pic8259_read_slave_isr();
-		uint8_t bit = BIT(isr - 8);
+		uint8_t bit = BIT(irq - 8);
 
 		if (isr & bit) {
 			outb(PIC8259_IO_PIC2, PIC8259_EOI);
@@ -128,12 +141,13 @@ void pic8259_send_eoi(int irq)
 		outb(PIC8259_IO_PIC1, PIC8259_EOI);
 	} else {
 		uint8_t isr = pic8259_read_master_isr();
-		uint8_t bit = BIT(isr);
+		uint8_t bit = BIT(irq);
 
 		if (isr & bit) {
 			outb(PIC8259_IO_PIC1, PIC8259_EOI);
 		}
 	}
+	spin_unlock(&irqmask_lock);
 }
 
 uint32_t pic8259_get_ticks(void)

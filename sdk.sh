@@ -149,8 +149,10 @@ case "${subcmd}" in
             -no-shutdown \
             -serial stdio \
             -vga virtio \
+			-d int \
             -D qemu.log \
-            -cdrom build/denton.iso
+            -cdrom build/denton.iso \
+            $@
         ;;
 
     help)

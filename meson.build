@@ -1,7 +1,7 @@
 project('denton', 'c',
   version : '0.1',
   meson_version : '>=1.4',
-  default_options : ['c_std=gnu99', 'warning_level=1', 'optimization=2'])
+  default_options : ['c_std=gnu99', 'warning_level=1', 'optimization=0'])
 
 env = environment()
 env.set('DESTDIR', 'sysroot')

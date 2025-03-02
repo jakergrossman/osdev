@@ -8,6 +8,7 @@
 #include <denton/compiler.h>
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 enum idt32_gate {
@@ -40,7 +41,7 @@ struct idt_entry {
 } __packed;
 
 void idt_init(void);
-void idt_set_entry(struct idt_entry* entry, bool istrap, uint32_t offset,
+void idt_set_entry(size_t irqno, bool istrap,
                    uint16_t sel, uint8_t priviledge);
 
 
@@ -85,7 +86,7 @@ struct idt_id {
 
 
 void idt_init(void);
-void idt_flush(physaddr_t phys);
+void idt_flush(struct idt_ptr* ptr);
 
 int x86_register_irq_handler(uint8_t irqno, struct irq_handler* hand);
 
