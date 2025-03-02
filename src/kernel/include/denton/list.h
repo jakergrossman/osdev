@@ -1,7 +1,9 @@
 #ifndef __DENTON_LIST_H
 #define __DENTON_LIST_H
 
+#include "denton/compiler.h"
 #include <denton/container_of.h>
+#include <stdbool.h>
 
 struct list_head {
     struct list_head* prev;
@@ -38,6 +40,13 @@ list_add(struct list_head* added, struct list_head* head)
 }
 
 static inline void
+list_add_tail(struct list_head* added, struct list_head* head)
+{
+    __list_add(added, head->prev, head);
+}
+
+
+static inline void
 __list_del(struct list_head * prev, struct list_head * next)
 {
     next->prev = prev;
@@ -49,6 +58,13 @@ list_del(struct list_head * entry)
 {
     __list_del(entry->prev, entry->next);
 }
+
+static inline bool
+list_empty(struct list_head * entry)
+{
+	return entry->next == entry;
+}
+
 
 #define list_entry(iter, type, member) \
     container_of(iter, type, member)

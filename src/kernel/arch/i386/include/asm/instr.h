@@ -1,14 +1,63 @@
 #ifndef __DENTON_ARCH_I386_ASM_HALT_H
 #define __DENTON_ARCH_I386_ASM_HALT_H
 
-static inline void cli(void)
+#include <denton/compiler.h>
+#include <stdint.h>
+
+static __always_inline void cli(void)
 {
     asm volatile ( "cli" );
 }
 
-static inline void hlt(void)
+static __always_inline void hlt(void)
 {
     asm volatile ( "hlt" );
 }
+
+static __always_inline void
+outb(uint16_t port, uint8_t value)
+{
+	asm volatile (
+		"outb %1, %0"
+		:
+		: "dN" (port), "a" (value)
+	);
+}
+
+static __always_inline uint8_t
+inb(uint16_t port)
+{
+	uint8_t ret;
+	asm volatile (
+		"inb %1, %0"
+		: "=a" (ret)
+		: "dN" (port)
+	);
+	return ret;
+}
+
+static __always_inline uint32_t
+eflags_read(void)
+{
+	uint32_t flags;
+	asm volatile(
+		"pushfl\n\t"
+		"popl %0\n"
+		: "=a" (flags)
+	);
+	return flags;
+}
+
+static __always_inline void
+eflags_write(uint32_t flags)
+{
+	asm volatile(
+		"pushfl\n\t"
+		"popl %0\n"
+		:
+		: "a" (flags)
+	);
+}
+
 
 #endif

@@ -35,3 +35,7 @@ void kfree(void* mem, size_t size)
 	size_t required_pages = size / PAGE_SIZE;
 	page_free(page_from_virt(mem), required_pages);
 }
+
+void  kheap_init(void)
+{
+}

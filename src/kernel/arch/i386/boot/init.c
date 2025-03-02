@@ -1,3 +1,5 @@
+#include "asm/irq.h"
+#include "denton/heap.h"
 #include <denton/klog.h>
 #include <denton/kmain.h>
 #include <denton/kparam.h>
@@ -9,6 +11,7 @@
 #include <asm/cpuid.h>
 #include <asm/memlayout.h>
 #include <asm/paging.h>
+#include <asm/drivers/pic8259.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -63,7 +66,7 @@ void cmain(uint32_t magic, struct multiboot_info* mb_info)
 
 	terminal_initialize(EARLY_BOOT_VGA);
 
-	klog_info("==< DENTON BOOTING ===\n");
+	klog_info("==< DENTON BOOTING >==\n");
 	klog_info("kernel physical location: 0x%08X-0x%08X\n", V2P(&__KERNEL_START), V2P(&__KERNEL_END));
 	klog_info("kernel virtual  location: 0x%08X-0x%08X\n", &__KERNEL_START, &__KERNEL_END);
 
@@ -73,13 +76,21 @@ void cmain(uint32_t magic, struct multiboot_info* mb_info)
 		panic("bad magic");
 	}
 
+	idt_init();
+
+	/* set up our permanent kernel space mappng */
 	paging_setup_kernelspace();
 
-	kernel_cmdline_init(__kernel_cmdline);
+	/* handoff from bootmem to physical frame allocator */
 	bootmem_setup_pga();
-	// klog_trace("setting pic8259...\n");
-	// klog_trace("setting pic8259 timer...\n");
-	// klog_trace("reading RTC...\n");
+	kheap_init();
+
+	/* now that we have dynamic memory, let's handle the command line */
+	kernel_cmdline_init(__kernel_cmdline);
+
+	/* setup interrupt controller */
+	pic8259_init();
+	pic8259_timer_init();
 
 	kmain();
 }

@@ -8,6 +8,7 @@
 #define GFP_KERNEL          BIT(5)
 #define GFP_USER            BIT(6)
 
+void  kheap_init(void);
 void* kmalloc(size_t size, uint32_t flags);
 void* kzalloc(size_t size, uint32_t flags);
 void  kfree(void* mem, size_t size);

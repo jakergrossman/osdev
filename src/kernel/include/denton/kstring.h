@@ -1,0 +1,21 @@
+#ifndef __DENTON_KSTRING_H
+#define __DENTON_KSTRING_H
+
+#include <denton/heap.h>
+#include <stdio.h>
+#include <string.h>
+
+static inline char*
+kstrdup(const char* orig, unsigned int flags)
+{
+	size_t len = strlen(orig);
+	char* newmem = kmalloc(len, flags);
+	if (!newmem) {
+		return newmem;
+	}
+	strcpy(newmem, orig);
+	printf("new: '%s'\n", newmem);
+	return newmem;
+}
+
+#endif
