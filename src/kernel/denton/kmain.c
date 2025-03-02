@@ -1,3 +1,4 @@
+#include "denton/heap.h"
 #include "denton/mm/pga.h"
 #include "denton/panic.h"
 #include <denton/bits.h>
@@ -15,15 +16,4 @@ void kmain(void)
 {
 	// for now, update terminal base now that we are using the kernel pgdir
 	terminal_update_base(INIT_VGA);
-
-	struct page* p1 = page_alloc(8, 0);
-	struct page* p2 = page_alloc(8, 0);
-	page_free(p1+4, 4);
-	struct page* p3 = page_alloc(8, 0);
-	struct page* p4 = page_alloc(4, 0);
-
-	klog_info("P1Virtual: 0x%08X\n", p1->virt);
-	klog_info("P2Virtual: 0x%08X\n", p2->virt);
-	klog_info("P3Virtual: 0x%08X\n", p3->virt);
-	klog_info("P4Virtual: 0x%08X\n", p4->virt);
 }

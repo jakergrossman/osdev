@@ -114,6 +114,7 @@ void* __bootmem_alloc_nopanic(size_t len, size_t alignment)
 		physaddr_t end_addr = ALIGN_2_DOWN(reg->end_ex, alignment);
 
 		if ((first_addr < end_addr) && (end_addr - first_addr >= len)) {
+			// incrementing this causes it to be unavailable for the page allocator
 			reg->start = first_addr + len;
 			return p_to_v(first_addr);
 		}

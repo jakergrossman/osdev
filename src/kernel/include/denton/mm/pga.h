@@ -46,7 +46,7 @@ page_from_phys(physaddr_t phys)
 static __always_inline struct page*
 page_from_virt(virtaddr_t virt)
 {
-	return page_from_pfn(V2P(virt));
+	return page_from_pfn(pfn_from_physaddr(V2P(virt)));
 }
 
 static __always_inline physaddr_t
