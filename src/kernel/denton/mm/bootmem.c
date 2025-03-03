@@ -1,5 +1,6 @@
 #include "denton/mm/pga.h"
 #include "denton/panic.h"
+#include <denton/errno.h>
 #include <denton/mm/bootmem.h>
 #include <denton/math.h>
 #include <denton/klog.h>
@@ -75,7 +76,6 @@ bootmem_add(uint64_t start, uint64_t end)
 	if (((start <  vga_end)   && (end >= vga_end)) ||
 		((start <= vga_start) && (end >  vga_start)))
 	{
-		printf("???\n");
 		if (start < vga_start) {
 			bootmem_add(start, vga_start);
 		}
@@ -100,8 +100,7 @@ bootmem_add(uint64_t start, uint64_t end)
 
 	klog_warn("ran out of regions, discardad region 0x%08llX-0x%08llX\n", start, end, (end - start) / __KiX(1));
 
-	// TODO return ENOMEM
-	return -1;
+	return -ENOMEM;
 }
 
 void* __bootmem_alloc_nopanic(size_t len, size_t alignment)

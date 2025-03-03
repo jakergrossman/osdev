@@ -1,3 +1,4 @@
+#include "asm/atomic.h"
 #include "denton/bits/bits.h"
 #include "denton/panic.h"
 #include <denton/klog.h>
@@ -28,7 +29,7 @@ enum pic8259_register {
 
 static uint16_t irqmask = 0xFFF & ~(1UL<<PIC8259_IRQ_SLAVE);
 static spinlock_t irqmask_lock = SPINLOCK_INIT();
-static atomic32_t system_tick;
+static atomic32_t system_tick = ATOMIC32_INIT(0);
 
 static void pic_master_set_mask(void)
 {
@@ -73,7 +74,7 @@ void pic8259_init(void)
 
 void pic8259_timer_init(void)
 {
-	klog_trace("setting pic8259 (%d Hz)...\n", TIMER_TICKS_PER_SECOND);
+	klog_trace("setting pic8259 (%d Hz)...\n", 1000);
 	outb(PIC8259_TIMER_MODE_REG,
 		PIC8259_TIMER_SEL0 |
 		PIC8259_TIMER_RATGEN |

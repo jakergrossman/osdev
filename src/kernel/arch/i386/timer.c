@@ -3,7 +3,7 @@
 
 uint32_t timer_get_ms(void)
 {
-	return timer_get_ticks() / TIMER_TICKS_PER_SECOND / 1000;
+	return 1000 * timer_get_ticks() / TIMER_TICKS_PER_SECOND;
 }
 
 uint32_t timer_get_ticks(void)

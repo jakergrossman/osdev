@@ -19,7 +19,7 @@
 #define __packed        __atr(packed)
 #define __maybe_unused  __atr(unused)
 #define __used          __atr(unused)
-#define __must_check    __attribute__((warn_unused))
+#define __must_check    __attribute__((warn_unused_result))
 #define __align(n)      __atr(__aligned__(n))
 #define __always_inline inline __atr(always_inline)
 #define __naked         __atr(naked)

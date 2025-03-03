@@ -1,22 +1,21 @@
-#include "include/asm/irq.h"
-#include "asm/gdt.h"
-#include "asm/idt.h"
-#include "asm/instr.h"
-#include "asm/drivers/pic8259.h"
-#include "asm/memlayout.h"
-#include "denton/atomic.h"
-#include "denton/heap.h"
-#include "denton/klog.h"
-#include "denton/kstring.h"
-#include "denton/math/minmax.h"
-#include "denton/tty.h"
-#include "denton/types.h"
-#include <denton/list.h>
+#include <denton/heap.h>
+#include <denton/klog.h>
+#include <denton/kstring.h>
+#include <denton/math.h>
+#include <denton/atomic.h>
+#include <denton/tty.h>
+#include <denton/types.h>
+
+#include <asm/instr.h>
+#include <asm/gdt.h>
+#include <asm/idt.h>
 #include <asm/irq.h>
-#include <asm/atomic.h>
+#include <asm/irq_handler.h>
+
+#include <asm/drivers/pic8259.h>
+
 #include <stdbool.h>
 #include <stdint.h>
-
 
 int irq_register_handler(
     const char* name,
@@ -42,6 +41,7 @@ int irq_register_handler(
     handler->type = type;
     handler->irqfn = irqfn;
 
+    klog_info("irq %d, '%s'\n", irqno, handler->name);
     int err = x86_register_irq_handler(irqno + PIC8259_IRQ0, handler);
     if (err) {
         goto free_name;
@@ -74,11 +74,10 @@ int x86_register_irq_handler(uint8_t irqno, struct irq_handler* hand)
         ident->flags = hand->flags;
     }
 
-    klog_info("interrupt %d, name: %s\n", irqno, hand->name);
 
     list_add_tail(&ident->list, &hand->listentry);
 
-    if (enable && (irqno >= PIC8259_IRQ0) && (irqno <= (PIC8259_IRQ0 + 16))) {
+    if (enable && kinrange(irqno, PIC8259_IRQ0, PIC8259_IRQ0 + 16)) {
         pic8259_enable_irq(irqno - PIC8259_IRQ0);
     }
 
@@ -89,28 +88,6 @@ int x86_register_irq_handler(uint8_t irqno, struct irq_handler* hand)
 
 void irq_global_handler(struct irq_frame* iframe)
 {
-    printf("edi:  %08X\n", iframe->edi);
-    printf("esi:  %08X\n", iframe->esi);
-    printf("ebp:  %08X\n", iframe->ebp);
-    printf("oesp: %08X\n", iframe->oesp);
-    printf("ebx:  %08X\n", iframe->ebx);
-    printf("edx:  %08X\n", iframe->edx);
-    printf("ecx:  %08X\n", iframe->edi);
-    printf("eax:  %08X\n", iframe->eax);
-    printf("gs:       %04X\n", iframe->gs);
-    printf("fs:       %04X\n", iframe->fs);
-    printf("es:       %04X\n", iframe->es);
-    printf("ds:       %04X\n", iframe->ds);
-    printf("irq:  %08X\n", iframe->intno);
-    printf("err:  %08X\n", iframe->err);
-    printf("eip:  %08X\n", iframe->eip);
-    printf("cs:       %04X\n", iframe->cs);
-    printf("eflg: %08X\n", iframe->eflags);
-    printf("esp:  %08X\n", iframe->esp);
-    printf("ss:       %04X\n", iframe->ss);
-    terminal_flush();
-    hlt();
-
     struct idt_id* ident = idt_get_id(iframe->intno);
     int pic8259_irq = -1;
 

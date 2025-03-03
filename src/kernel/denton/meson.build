@@ -2,6 +2,7 @@ kernel_c_sources = files(
   'kmain.c',
   'heap.c',
   'kparam.c',
+  'irq.c',
 )
 
 subdir('mm')

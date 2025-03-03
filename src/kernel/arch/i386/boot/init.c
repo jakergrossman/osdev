@@ -97,7 +97,5 @@ void cmain(uint32_t magic, struct multiboot_info* mb_info)
 	pic8259_init();
 	pic8259_timer_init();
 
-	// sti();
-
 	kmain();
 }

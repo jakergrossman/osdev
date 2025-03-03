@@ -1,6 +1,7 @@
 #ifndef __DENTON_ARCH_I386_ASM_IRQ_H
 #define __DENTON_ARCH_I386_ASM_IRQ_H
 
+#include "asm/instr.h"
 #include <denton/atomic.h>
 #include <denton/list.h>
 #include <denton/types.h>
@@ -35,6 +36,18 @@ irq_handler_init(struct irq_handler* hand)
 	*hand = (struct irq_handler){ .listentry = LIST_HEAD_INIT(hand->listentry) };
 }
 
+#define IRQ_HANDLER_INIT(hd, nm, hand, priv, typ, fl) \
+    { \
+        .name = nm, \
+        .irqfn = hand, \
+        .privdata = priv, \
+        .type = typ, \
+        .flags = fl, \
+        .listentry = LIST_HEAD_INIT((hd).listentry), \
+    }
+
+
+
 int x86_register_irq_handler(uint8_t irqno, struct irq_handler* hand);
 
 int irq_register_handler(
@@ -47,6 +60,14 @@ int irq_register_handler(
 
 typedef int irq_flags_t;
 #define irq_disable() cli()
+#define irq_enable() sti()
+
+static inline __must_check uint32_t
+irq_save(void)
+{
+    return eflags_read();
+}
+
 #define irq_save() eflags_read()
 #define irq_restore(flags) eflags_write(flags)
 

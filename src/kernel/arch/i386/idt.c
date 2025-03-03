@@ -1,3 +1,6 @@
+#include "asm/instr.h"
+#include "denton/klog.h"
+#include "denton/tty.h"
 #include <denton/compiler.h>
 #include <denton/atomic.h>
 #include <denton/list.h>
@@ -8,6 +11,7 @@
 #include <asm/idt.h>
 #include <asm/irq.h>
 
+#include <stdio.h>
 #include <sys/cdefs.h>
 #include <stdlib.h>
 
@@ -16,6 +20,80 @@ static struct idt_id idt_ids[256];
 
 /* x86 IDT entry table */
 static struct idt_entry idt_entries[256] = { 0 };
+
+static const char *cpu_exception_name[32] = {
+    [0] = "Divide by zero",
+    [1] = "Debug",
+    [2] = "NMI",
+    [3] = "Breakpoint",
+    [4] = "Overflow",
+    [5] = "Bound Range Exceeded",
+    [6] = "Invalid OP",
+    [7] = "Device Not Available",
+    [8] = "Double Fault",
+    [10] = "Invalid TSS",
+    [11] = "Segment Not Present",
+    [12] = "Stack-Segment Fault",
+    [13] = "General Protection Fault",
+    [14] = "Page Fault",
+    [16] = "Floating-Point Exception",
+    [17] = "Alignment Check",
+    [18] = "Machine Check",
+    [19] = "SIMD Floating-Point Exception",
+    [20] = "Virtualization Exception",
+    [30] = "Security Exception",
+};
+
+static void
+unhandled_cpu_exception(struct irq_frame* frame, void* privdata)
+{
+    printf( "[ 0.000000 ] ===== Exception: %s(%d)!!! =====\n",
+            cpu_exception_name[frame->intno], frame->intno);
+    printf( "[ 0.000000 ] ERR: 0x%08X   EIP: V@%p\n", frame->err, (void *)frame->eip);
+    printf( "[ 0.000000 ] EAX: 0x%08X   EBX: 0x%08X\n", frame->eax, frame->ebx);
+    printf( "[ 0.000000 ] ECX: 0x%08X   EDX: 0x%08X\n", frame->ecx, frame->edx);
+    printf( "[ 0.000000 ] ESI: 0x%08X   EDI: 0x%08X\n", frame->esi, frame->edi);
+    printf( "[ 0.000000 ] ESP: 0x%08X   EBP: 0x%08X\n", frame->esp, frame->ebp);
+    printf( "[ 0.000000 ] CS:  0x%04X       SS:  0x%04X\n", frame->cs, frame->ss);
+    printf( "[ 0.000000 ] DS:  0x%04X       ES:  0x%04X\n", frame->ds, frame->es);
+    printf( "[ 0.000000 ] FS:  0x%04X       GS:  0x%04X\n", frame->fs, frame->gs);
+
+    terminal_flush();
+
+    while(1) {
+        hlt();
+    }
+}
+
+static void
+div_by_zero_handler(struct irq_frame* frame, void* priv)
+{
+    // TODO: A userspace div-by-zero just kills the process
+    unhandled_cpu_exception(frame, priv);
+}
+
+static struct irq_handler cpu_exceptions[] = {
+    [0] = IRQ_HANDLER_INIT(cpu_exceptions[0], "Divide By Zero", div_by_zero_handler, NULL, IRQ_INTERRUPT, 0),
+    [1] = IRQ_HANDLER_INIT(cpu_exceptions[0], "Debug", unhandled_cpu_exception, NULL, IRQ_INTERRUPT, 0),
+    [2] = IRQ_HANDLER_INIT(cpu_exceptions[2], "NMI", unhandled_cpu_exception, NULL, IRQ_INTERRUPT, 0),
+    [3] = IRQ_HANDLER_INIT(cpu_exceptions[3], "Breakpoint", unhandled_cpu_exception, NULL, IRQ_INTERRUPT, 0),
+    [4] = IRQ_HANDLER_INIT(cpu_exceptions[4], "Overflow", unhandled_cpu_exception, NULL, IRQ_INTERRUPT, 0),
+    [5] = IRQ_HANDLER_INIT(cpu_exceptions[5], "Bound Range Exceeded", unhandled_cpu_exception, NULL, IRQ_INTERRUPT, 0),
+    [6] = IRQ_HANDLER_INIT(cpu_exceptions[6], "Invalid OP", unhandled_cpu_exception, NULL, IRQ_INTERRUPT, 0),
+    [7] = IRQ_HANDLER_INIT(cpu_exceptions[7], "Device Not Available", unhandled_cpu_exception, NULL, IRQ_INTERRUPT, 0),
+    [8] = IRQ_HANDLER_INIT(cpu_exceptions[8], "Double Fault", unhandled_cpu_exception, NULL, IRQ_INTERRUPT, 0),
+    [10] = IRQ_HANDLER_INIT(cpu_exceptions[10], "Invalid TSS", unhandled_cpu_exception, NULL, IRQ_INTERRUPT, 0),
+    [11] = IRQ_HANDLER_INIT(cpu_exceptions[11], "Segment Not Present", unhandled_cpu_exception, NULL, IRQ_INTERRUPT, 0),
+    [12] = IRQ_HANDLER_INIT(cpu_exceptions[12], "Stack-Segment Fault", unhandled_cpu_exception, NULL, IRQ_INTERRUPT, 0),
+    [13] = IRQ_HANDLER_INIT(cpu_exceptions[13], "General Protection Fault", unhandled_cpu_exception, NULL, IRQ_INTERRUPT, 0),
+    [16] = IRQ_HANDLER_INIT(cpu_exceptions[16], "Floating-Point Exception", unhandled_cpu_exception, NULL, IRQ_INTERRUPT, 0),
+    [17] = IRQ_HANDLER_INIT(cpu_exceptions[17], "Alignment Check", unhandled_cpu_exception, NULL, IRQ_INTERRUPT, 0),
+    [18] = IRQ_HANDLER_INIT(cpu_exceptions[18], "Machine Check", unhandled_cpu_exception, NULL, IRQ_INTERRUPT, 0),
+    [19] = IRQ_HANDLER_INIT(cpu_exceptions[19], "SIMD Floating-Point Exception", unhandled_cpu_exception, NULL, IRQ_INTERRUPT, 0),
+    [20] = IRQ_HANDLER_INIT(cpu_exceptions[20], "Virtualization Exception", unhandled_cpu_exception, NULL, IRQ_INTERRUPT, 0),
+    [30] = IRQ_HANDLER_INIT(cpu_exceptions[30], "Security Exception", unhandled_cpu_exception, NULL, IRQ_INTERRUPT, 0),
+};
+
 
 /* directly load the IDT pointer and size into the IDT register */
 static __always_inline void
@@ -49,6 +127,12 @@ void idt_init(void)
     for (int i = 0; i < 256; i++) {
         list_init(&idt_ids[i].list);
         idt_set_entry(i, false, GDT_KERNEL_CODE, GDT_DPL_KERNEL);
+    }
+
+    for (size_t i = 0; i < ARRAY_LENGTH(cpu_exceptions); i++) {
+        if (cpu_exceptions[i].irqfn) {
+            x86_register_irq_handler(i, &cpu_exceptions[i]);
+        }
     }
 
     idt_flush();

@@ -5,24 +5,20 @@
 #include <denton/list.h>
 #include <denton/compiler.h>
 
-#include <limits.h>
-#include <stdlib.h>
+#include <asm/irq.h>
 
-void __naked int_handler(void) 
-{
-}
-    // INIT_VGA = 0xC00B8000, // VGA mem after cmain
+#include <limits.h>
 
 void kmain(void)
 {
 	// for now, update terminal base now that we are using the kernel pgdir
 	terminal_update_base(INIT_VGA);
 
+	volatile uint32_t n = *(uint32_t*)0xC0000001;
 
-	for(;;) {
-		asm volatile (
-			"mov $0x123abc, 0xC0000000\n"
-			"int $0xFF"
-		);
-	}
+
+	irq_enable();
+
+	asm volatile ("int $3");
+	klog_info("OS is running...\n");
 }

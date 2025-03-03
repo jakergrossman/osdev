@@ -4,6 +4,7 @@
 #include <denton/compiler.h>
 #include <denton/types.h>
 #include <stdint.h>
+#include <sys/cdefs.h>
 
 static __always_inline void cli(void)
 {
@@ -15,6 +16,10 @@ static __always_inline void sti(void)
     asm volatile ( "sti" );
 }
 
+static __always_inline void interrupt(uint8_t irqno)
+{
+	asm volatile ( "irq $0" : : "r" (irqno) );
+}
 
 static __always_inline void hlt(void)
 {

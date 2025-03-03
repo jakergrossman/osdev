@@ -13,7 +13,7 @@ kstrdup(const char* orig, unsigned int flags)
 	if (!newmem) {
 		return newmem;
 	}
-	strcpy(newmem, orig);
+	memcpy(newmem, orig, len+1);
 	printf("new: '%s'\n", newmem);
 	return newmem;
 }
