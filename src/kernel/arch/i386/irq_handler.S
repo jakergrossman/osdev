@@ -1,19 +1,22 @@
-#include <asm/memlayout.h>
-
+/**
+ * unifying interrupt handler:
+ * pushes processor state onto the stack, then calls our single IRQ handler
+ */
 	.globl irq_handler
 irq_handler:
+	# save registers going in
 	pushl %ds
 	pushl %es
 	pushl %fs
 	pushl %gs
 	pushal
 
-	movw $16, %ax
+	# set segment selectors to our data segment
+	# TODO: don't hardcode this
+	movw $0x10, %ax
 	movw %ax, %ds
 	movw %ax, %es
 	movw %ax, %fs
-	movw $48, %ax
-	movw %ax, %gs
 
 	cld
 
@@ -21,7 +24,6 @@ irq_handler:
 	call irq_global_handler
 	addl $4, %esp
 
-	.globl irq_handler
 irq_handler_end:
 	popal
 	popl %gs
@@ -31,37 +33,35 @@ irq_handler_end:
 	addl $0x8, %esp # irq num and error code
 	iretl
 
-	# .if !((\irqno == 8) || (\irqno >= 10 && \irqno <= 14))
-	# pushl $0
-	# .endif
-	# pushl $\irqno
-	# jmp irq_handler
+/** macro definition for 1st stage interrupt handler */
 .altmacro
 .macro irqN irqno
 .type irq\irqno, @function
 irq\irqno:
+	.if !((\irqno == 8) || (\irqno >= 10 && \irqno <= 14))
+		pushl $0
+	.endif
+	pushl $\irqno
+	jmp irq_handler
 	iretl
 .endm
 
+/** declare irq0-irq255 */
 .section .text
-
 .altmacro
 .set i,0
-.rept 255
+.rept 256
 	irqN %i
 	.set i, i+1
 .endr
 
-.section .text
-irq255:
-	iretl
-
+/** declare array of all IRQ handler addresses */
 .macro irq_labelN irqno
 	.long irq\irqno
 .endm
 
-.globl irq_hands
-irq_hands:
+.globl irq_handlers
+irq_handlers:
 .set i,0
 .rept 256
 	irq_labelN %i

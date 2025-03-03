@@ -1,6 +1,8 @@
 #ifndef __DENTON_ARCH_1386_ASM_IDT_H
 #define __DENTON_ARCH_1386_ASM_IDT_H
 
+/** Interrupt Descriptor Table (IDT) Handling Routines */
+
 #include "denton/atomic.h"
 #include "denton/list.h"
 #include <denton/compiler.h>
@@ -13,8 +15,8 @@ enum idt32_gate {
     IDT32_GATE_TASK = 0x5,
     IDT32_GATE_IRQ16 = 0x6,
     IDT32_GATE_TRAP16 = 0x7,
-    IDT32_GATE_IRQ32 = 0x8,
-    IDT32_GATE_TRAP32 = 0x9,
+    IDT32_GATE_IRQ32 = 0xE,
+    IDT32_GATE_TRAP32 = 0xF,
 };
 
 struct idt_ptr {
@@ -33,17 +35,15 @@ struct idt_entry {
     uint16_t physbase_high;
 } __packed;
 
-
-void idt_init(void);
-void idt_flush(void);
-void idt_set_entry(size_t irqno, bool istrap, uint16_t sel, uint8_t priviledge);
-struct idt_id * idt_get_id(size_t idtno);
-
 struct idt_id {
     atomic_t count;
     uint32_t flags;
     struct list_head list;
 };
 
+void idt_init(void);
+void idt_flush(void);
+void idt_set_entry(size_t irqno, bool istrap, uint16_t sel, uint8_t priviledge);
+struct idt_id * idt_get_id(size_t idtno);
 
 #endif

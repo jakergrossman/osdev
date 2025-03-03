@@ -1,7 +1,6 @@
 #ifndef __DENTON_ARCH_I386_ASM_IRQ_H
 #define __DENTON_ARCH_I386_ASM_IRQ_H
 
-
 #include <denton/atomic.h>
 #include <denton/list.h>
 #include <denton/types.h>
@@ -11,22 +10,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-extern void (*irq_hands[256])(void);
-
-struct irq_frame {
-    uint32_t edi, esi, ebp, oesp, ebx, edx, ecx, eax;
-    uint16_t gs, pad1, fs, pad2, es, pad3, ds, pad4;
-
-    uint32_t intno;
-    uint32_t err;
-
-    uint32_t eip;
-    uint16_t cs, pad5;
-    uint32_t eflags;
-
-    uint32_t esp;
-    uint16_t ss, pad6;
-} __packed;
+#include <asm/irq_handler.h>
 
 enum irq_type {
     IRQ_INTERRUPT,

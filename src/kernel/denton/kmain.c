@@ -18,12 +18,11 @@ void kmain(void)
 	// for now, update terminal base now that we are using the kernel pgdir
 	terminal_update_base(INIT_VGA);
 
-	asm volatile (
-		"mov $0x123abc, 0xC0000000\n"
-		"int $0xFF"
-	);
 
 	for(;;) {
-		hlt();
+		asm volatile (
+			"mov $0x123abc, 0xC0000000\n"
+			"int $0xFF"
+		);
 	}
 }

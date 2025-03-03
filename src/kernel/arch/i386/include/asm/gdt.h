@@ -1,5 +1,7 @@
-#ifndef __GDT_H
-#define __GDT_H
+#ifndef __DENTON_ARCH_1386_ASM_GDT_H
+#define __DENTON_ARCH_1386_ASM_GDT_H
+
+/** Global Descriptor Table (IDT) Handling Routines */
 
 #include "denton/compiler.h"
 #include <denton/bits/bits.h>
@@ -35,6 +37,7 @@ enum {
     GDT_ENTRIES = 7,
 };
 
+/* segment IDs */
 enum gdt_selector {
     GDT_NULL,
     GDT_KERNEL_CODE,
@@ -63,19 +66,19 @@ struct gdt_ptr {
     uint32_t base;
 } __packed;
 
-
+/* reconstruct the limit from @gdt */
 static inline uint32_t
 gdt_limit(const struct gdt_entry* gdt)
 {
     return (gdt->limit_low) | (gdt->limit_low << 16);
 }
 
+/* reconstruct the base from @gdt */
 static inline uint32_t
 gdt_base(const struct gdt_entry* gdt)
 {
     return (gdt->base_low) | (gdt->base_mid << 16) | (gdt->base_hi << 24);
 }
-
 
 void gdt_flush(const struct gdt_entry* gdt, size_t len);
 

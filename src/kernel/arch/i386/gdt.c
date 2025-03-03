@@ -3,8 +3,6 @@
 #include "denton/types.h"
 #include <asm/gdt.h>
 
-static struct gdt_ptr gdt_ptr;
-
 static __always_inline void
 __gdt_load(virtaddr_t addr)
 {
@@ -40,7 +38,9 @@ __gdt_flush(const struct gdt_ptr* ptr)
 
 void gdt_flush(const struct gdt_entry* gdtbase, size_t len)
 {
-    gdt_ptr.base = (uintptr_t)gdtbase;
-    gdt_ptr.limit = sizeof(*gdtbase)*len - 1;
-    __gdt_flush(&gdt_ptr);
+    struct gdt_ptr gdt_ptr = {
+        .base = (uintptr_t)gdtbase,
+        .limit = sizeof(*gdtbase)*len - 1,
+    };
+    __gdt_flush((virtaddr_t)&gdt_ptr);
 }
