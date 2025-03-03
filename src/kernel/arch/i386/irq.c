@@ -1,5 +1,6 @@
 #include "include/asm/irq.h"
 #include "asm/gdt.h"
+#include "asm/idt.h"
 #include "asm/instr.h"
 #include "asm/drivers/pic8259.h"
 #include "asm/memlayout.h"
@@ -15,60 +16,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <asm/gdt.h>
-
-static struct idt_id idt_ids[256];
-static struct idt_entry idt_entries[256] = { 0 };
-static struct idt_ptr idt_ptr;
-
-void idt_flush(struct idt_ptr* ptr)
-{
-    asm volatile (
-        "lidt (%0)"
-        :: "r" (ptr)
-    );
-}
-
-extern void (*irq_hands[256])(void);
-void idt_init(void)
-{
-    idt_ptr.limit = sizeof(idt_entries) - 1;
-    idt_ptr.base = (uintptr_t)&idt_entries;
-
-    for (int i = 0; i < 256; i++) {
-        list_init(&idt_ids[i].list);
-        idt_set_entry(i, false, GDT_KERNEL_CODE, GDT_DPL_KERNEL);
-    }
-
-    idt_flush(&idt_ptr);
-}
-
-#define STS_TG32 0xF
-#define STS_IG32 0xF
-
-void idt_set_entry(
-    size_t idtno,
-    bool istrap,
-    uint16_t sel,
-    uint8_t priviledge)
-{
-    if (idtno >= ARRAY_LENGTH(idt_entries)) {
-        return;
-    }
-
-    physaddr_t physbase = v_to_p(&irq_hands[idtno]);
-    struct idt_entry updated = {
-        .physbase_low = physbase & 0xFFFF,
-        .physbase_high = (physbase >> 16) & 0xFFFF,
-        .code_segment = sel,
-        .reserved = 0,
-        .reserved2 = 0,
-        .gate_type = istrap ? STS_TG32 : STS_IG32,
-        .priviledge = priviledge,
-        .present = true,
-    };
-    idt_entries[idtno] = updated;
-}
 
 int irq_register_handler(
     const char* name,
@@ -115,14 +62,14 @@ int x86_register_irq_handler(uint8_t irqno, struct irq_handler* hand)
     irq_flags_t flags = irq_save();
     irq_disable();
 
-    struct idt_id* ident = idt_ids + irqno;
+    struct idt_id* ident = idt_get_id(irqno);
     if (!list_empty(&ident->list)) {
-        if (ident->type != hand->type) {
-            goto restore_flags;
-        }
+        // if (ident->type != hand->type) {
+        //     goto restore_flags;
+        // }
     } else {
         enable = true;
-        ident->type = hand->type;
+        // ident->type = hand->type;
         ident->flags = hand->flags;
     }
 
@@ -134,7 +81,7 @@ int x86_register_irq_handler(uint8_t irqno, struct irq_handler* hand)
         pic8259_enable_irq(irqno - PIC8259_IRQ0);
     }
 
-restore_flags:
+// restore_flags:
     irq_restore(flags);
     return err;
 }
@@ -142,7 +89,7 @@ restore_flags:
 void irq_global_handler(struct irq_frame* iframe)
 {
     printf("I MADE IT\n");
-    struct idt_id* ident = idt_ids + iframe->intno;
+    struct idt_id* ident = idt_get_id(iframe->intno);
     int pic8259_irq = -1;
 
     atomic_inc(&ident->count);

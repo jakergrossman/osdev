@@ -1,4 +1,3 @@
-#include "asm/irq.h"
 #include "denton/heap.h"
 #include <denton/klog.h>
 #include <denton/kmain.h>
@@ -14,6 +13,8 @@
 #include <asm/paging.h>
 #include <asm/drivers/pic8259.h>
 #include <asm/instr.h>
+#include <asm/irq.h>
+#include <asm/idt.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -96,7 +97,7 @@ void cmain(uint32_t magic, struct multiboot_info* mb_info)
 	pic8259_init();
 	pic8259_timer_init();
 
-	sti();
+	// sti();
 
 	kmain();
 }

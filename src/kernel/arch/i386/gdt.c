@@ -3,10 +3,9 @@
 #include "denton/types.h"
 #include <asm/gdt.h>
 
-extern void __get_gdt(uint32_t* val);
 static struct gdt_ptr gdt_ptr;
 
-static inline void
+static __always_inline void
 __gdt_load(virtaddr_t addr)
 {
     asm volatile (
@@ -14,24 +13,34 @@ __gdt_load(virtaddr_t addr)
     );
 }
 
-static inline void
+static __always_inline void
 __gdt_flush(const struct gdt_ptr* ptr)
 {
     cli();
+
     __gdt_load((virtaddr_t)ptr);
 
-    // asm volatile (
-    //     "jmpl $0x08, $1f\n"
-    //     "1:\n"
-    //     : : : "memory"
-    // );
+    /* reload CS and IP */
+    asm volatile (
+        "ljmp $0x08, $boing\n"
+        "boing:\n"
+        : : : "memory"
+    );
+
+    /* set the segment registers to use the new GDT */
+    asm volatile (
+        "movw %w0, %%ss\n"
+        "movw %w0, %%ds\n"
+        "movw %w0, %%es\n"
+        "movw %w0, %%fs\n"
+        : : "r" (GDT_KERNEL_DATA<<3)
+        : "memory"
+    );
 }
 
-void gdt_flush(const struct gdt_entry* gdt, size_t len)
+void gdt_flush(const struct gdt_entry* gdtbase, size_t len)
 {
-    uint32_t val;
-    __get_gdt(&val);
-    gdt_ptr.base = (uintptr_t)gdt;
-    gdt_ptr.limit = sizeof(struct gdt_entry) * len;
+    gdt_ptr.base = (uintptr_t)gdtbase;
+    gdt_ptr.limit = sizeof(*gdtbase)*len - 1;
     __gdt_flush(&gdt_ptr);
 }

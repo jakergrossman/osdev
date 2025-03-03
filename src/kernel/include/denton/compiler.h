@@ -22,6 +22,7 @@
 #define __must_check    __attribute__((warn_unused))
 #define __align(n)      __atr(__aligned__(n))
 #define __always_inline inline __atr(always_inline)
+#define __naked         __atr(naked)
 
 #define __kernel        __atr(address_space(0))
 #define __user          __atr((noderef, address_space(__user)))

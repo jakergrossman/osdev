@@ -9,6 +9,7 @@ kernel_arch_c_sources = files(
   'gdt.c',
   'timer.c',
   'irq.c',
+  'idt.c',
   'irq_handler.S',
 )
 

@@ -1,5 +1,5 @@
-#include "asm/gdt.h"
 #include <asm/cpu.h>
+#include <asm/gdt.h>
 
 #include <limits.h>
 
@@ -23,26 +23,10 @@ static void cpu_gdt(struct cpu_info * c)
     c->gdt_entries[GDT_CPU_VAR]
         = GDT_ENTRY(GDTA_WRITABLE, (uintptr_t)&c->self, sizeof(&c->self)-1, GDT_DPL_KERNEL);
 
+    // TODO:
     // c->gdt_entries[GDT_GDT_TSS] = GDT_ENTRY16(GDT_STS_T32A, uint32_t base, uint32_t limit, enum gdt_dpl dpl)
 
     gdt_flush(c->gdt_entries, 5);
-
-    /* reload CS and IP */
-    asm volatile (
-        "ljmp $0x08, $boing\n"
-        "boing:\n"
-        : : : "memory"
-    );
-
-    /* reset the segment registers to use the new GDT */
-    asm volatile (
-        "movw %w0, %%ss\n"
-        "movw %w0, %%ds\n"
-        "movw %w0, %%es\n"
-        "movw %w0, %%fs\n"
-        : : "r" (GDT_KERNEL_DATA<<3)
-        : "memory"
-    );
 }
 
 void cpu_early_init(void)

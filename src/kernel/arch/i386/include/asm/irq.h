@@ -11,39 +11,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-enum idt32_gate {
-    IDT32_GATE_TASK = 0x5,
-    IDT32_GATE_IRQ16 = 0x6,
-    IDT32_GATE_TRAP16 = 0x7,
-    IDT32_GATE_IRQ32 = 0x8,
-    IDT32_GATE_TRAP32 = 0x9,
-};
-
-enum irq_type {
-    IRQ_INTERRUPT,
-    IRQ_SYSCALL,
-};
-
-struct idt_ptr {
-    uint16_t limit;
-    uint32_t base;
-} __packed;
-
-struct idt_entry {
-    uint16_t physbase_low;
-    uint16_t code_segment;
-    uint8_t  reserved;
-    enum idt32_gate gate_type : 3;
-    uint8_t reserved2;
-    uint8_t priviledge : 2;
-    uint8_t present : 1;
-    uint16_t physbase_high;
-} __packed;
-
-void idt_init(void);
-void idt_set_entry(size_t irqno, bool istrap,
-                   uint16_t sel, uint8_t priviledge);
-
+extern void (*irq_hands[256])(void);
 
 struct irq_frame {
     uint32_t edi, esi, ebp, oesp, ebx, edx, ecx, eax;
@@ -59,6 +27,12 @@ struct irq_frame {
     uint32_t esp;
     uint16_t ss, pad6;
 } __packed;
+
+enum irq_type {
+    IRQ_INTERRUPT,
+    IRQ_SYSCALL,
+};
+
 
 typedef void (*irqfn_t)(struct irq_frame * frame, void * privdata);
 
@@ -76,17 +50,6 @@ irq_handler_init(struct irq_handler* hand)
 {
 	*hand = (struct irq_handler){ .listentry = LIST_HEAD_INIT(hand->listentry) };
 }
-
-struct idt_id {
-    atomic_t count;
-    enum irq_type type;
-    uint32_t flags;
-    struct list_head list;
-};
-
-
-void idt_init(void);
-void idt_flush(struct idt_ptr* ptr);
 
 int x86_register_irq_handler(uint8_t irqno, struct irq_handler* hand);
 

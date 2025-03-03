@@ -144,9 +144,9 @@ case "${subcmd}" in
             usage 1
         fi
 
+			# -no-reboot \
+			# -no-shutdown \
         qemu-system-i386 \
-            -no-reboot \
-            -no-shutdown \
             -serial stdio \
             -vga virtio \
 			-d int \

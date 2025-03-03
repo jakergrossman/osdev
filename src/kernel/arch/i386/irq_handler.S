@@ -31,23 +31,30 @@ irq_handler_end:
 	addl $0x8, %esp # irq num and error code
 	iretl
 
+	# .if !((\irqno == 8) || (\irqno >= 10 && \irqno <= 14))
+	# pushl $0
+	# .endif
+	# pushl $\irqno
+	# jmp irq_handler
 .altmacro
 .macro irqN irqno
+.type irq\irqno, @function
 irq\irqno:
-	.if !((\irqno == 8) || (\irqno >= 10 && \irqno <= 14))
-	pushl $0
-	.endif
-	pushl $\irqno
-	jmp irq_handler
+	iretl
 .endm
 
-.altmacro
 .section .text
+
+.altmacro
 .set i,0
-.rept 256
+.rept 255
 	irqN %i
 	.set i, i+1
 .endr
+
+.section .text
+irq255:
+	iretl
 
 .macro irq_labelN irqno
 	.long irq\irqno
@@ -60,28 +67,3 @@ irq_hands:
 	irq_labelN %i
 	.set i, i+1
 .endr
-
-; .global __gdt_flush
-.type gdt_flush, @function
-___gdt_flush:
-	cli
-	# get the pointer to the GDT
-	movl 4(%ebp), %eax
-	lgdt (%eax)
-
-	ljmp $0x08, $flush
-flush:
-
-	movw $0x10, %ax
-	movw %ax, %ds
-	movw %ax, %es
-	movw %ax, %fs
-	movw %ax, %gs
-	movw %ax, %ss
-	popl %ebp
-	ret
-
-.global __get_gdt
-__get_gdt:
-	sgdt (%eax)
-	ret
