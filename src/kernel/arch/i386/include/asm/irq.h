@@ -48,8 +48,6 @@ irq_handler_init(struct irq_handler* hand)
 
 
 
-int x86_register_irq_handler(uint8_t irqno, struct irq_handler* hand);
-
 int irq_register_handler(
 	const char* name,
 	int irqno,

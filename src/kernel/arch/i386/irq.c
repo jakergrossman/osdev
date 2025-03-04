@@ -5,6 +5,7 @@
 #include <denton/atomic.h>
 #include <denton/tty.h>
 #include <denton/types.h>
+#include <denton/errno.h>
 
 #include <asm/instr.h>
 #include <asm/gdt.h>
@@ -16,6 +17,10 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <limits.h>
+
+#include <denton/bits/bitmap.h>
+
 
 int irq_register_handler(
     const char* name,
@@ -25,66 +30,39 @@ int irq_register_handler(
     void* privdata
 )
 {
+    int ret = 0;
+
     struct irq_handler* handler = kzalloc(sizeof(*handler), 0);
     if (!handler) {
-        // TODO: return ENOMEM
-        return -1;
+        return -ENOMEM;
     }
     irq_handler_init(handler);
 
     // FIXME:
     handler->name = (char*)name;
     if (!handler->name) {
-        goto free_name;
+        goto free_handler;
     }
 
     handler->type = type;
     handler->irqfn = irqfn;
 
     klog_info("irq %d, '%s'\n", irqno, handler->name);
-    int err = x86_register_irq_handler(irqno + PIC8259_IRQ0, handler);
-    if (err) {
+    ret = idt_register_irq_handler(irqno + PIC8259_IRQ0, handler);
+    if (ret) {
         goto free_name;
     }
 
     return 0;
 
 free_name:
+    kfree((char*)name, strlen(name));
+free_handler:
     kfree(handler, sizeof(*handler));
-    return -1;
+
+    return ret;
 }
 
-int x86_register_irq_handler(uint8_t irqno, struct irq_handler* hand)
-{
-    int err = 0;
-    bool enable = false;
-
-    /* FIXME: we don't suuport SMP, so just turn off IRQs instead fo proper locking */
-    irq_flags_t flags = irq_save();
-    irq_disable();
-
-    struct idt_id* ident = idt_get_id(irqno);
-    if (!list_empty(&ident->list)) {
-        // if (ident->type != hand->type) {
-        //     goto restore_flags;
-        // }
-    } else {
-        enable = true;
-        // ident->type = hand->type;
-        ident->flags = hand->flags;
-    }
-
-
-    list_add_tail(&ident->list, &hand->listentry);
-
-    if (enable && kinrange(irqno, PIC8259_IRQ0, PIC8259_IRQ0 + 16)) {
-        pic8259_enable_irq(irqno - PIC8259_IRQ0);
-    }
-
-// restore_flags:
-    irq_restore(flags);
-    return err;
-}
 
 void irq_global_handler(struct irq_frame* iframe)
 {

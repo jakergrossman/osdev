@@ -7,6 +7,8 @@
 #include "denton/list.h"
 #include <denton/compiler.h>
 
+#include <asm/irq.h>
+
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -45,5 +47,6 @@ void idt_init(void);
 void idt_flush(void);
 void idt_set_entry(size_t irqno, bool istrap, uint16_t sel, uint8_t priviledge);
 struct idt_id * idt_get_id(size_t idtno);
+int idt_register_irq_handler(uint8_t irqno, struct irq_handler* hand);
 
 #endif

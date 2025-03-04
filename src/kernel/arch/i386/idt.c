@@ -10,6 +10,7 @@
 #include <asm/gdt.h>
 #include <asm/idt.h>
 #include <asm/irq.h>
+#include <asm/drivers/pic8259.h>
 
 #include <stdio.h>
 #include <sys/cdefs.h>
@@ -60,6 +61,7 @@ unhandled_cpu_exception(struct irq_frame* frame, void* privdata)
 
     terminal_flush();
 
+    cli(); /* should already be */
     while(1) {
         hlt();
     }
@@ -68,7 +70,7 @@ unhandled_cpu_exception(struct irq_frame* frame, void* privdata)
 static void
 div_by_zero_handler(struct irq_frame* frame, void* priv)
 {
-    // TODO: A userspace div-by-zero just kills the process
+    // TODO: Sometimes we could just kill the process, guess I'll find out later
     unhandled_cpu_exception(frame, priv);
 }
 
@@ -93,7 +95,6 @@ static struct irq_handler cpu_exceptions[] = {
     [20] = IRQ_HANDLER_INIT(cpu_exceptions[20], "Virtualization Exception", unhandled_cpu_exception, NULL, IRQ_INTERRUPT, 0),
     [30] = IRQ_HANDLER_INIT(cpu_exceptions[30], "Security Exception", unhandled_cpu_exception, NULL, IRQ_INTERRUPT, 0),
 };
-
 
 /* directly load the IDT pointer and size into the IDT register */
 static __always_inline void
@@ -131,7 +132,7 @@ void idt_init(void)
 
     for (size_t i = 0; i < ARRAY_LENGTH(cpu_exceptions); i++) {
         if (cpu_exceptions[i].irqfn) {
-            x86_register_irq_handler(i, &cpu_exceptions[i]);
+            idt_register_irq_handler(i, &cpu_exceptions[i]);
         }
     }
 
@@ -171,3 +172,34 @@ void idt_set_entry(
     idt_entries[idtno] = updated;
 }
 
+int idt_register_irq_handler(uint8_t irqno, struct irq_handler* hand)
+{
+    int err = 0;
+    bool enable = false;
+
+    /* FIXME: we don't suuport SMP, so just turn off IRQs instead fo proper locking */
+    irq_flags_t flags = irq_save();
+    irq_disable();
+
+    struct idt_id* ident = idt_get_id(irqno);
+    if (!list_empty(&ident->list)) {
+        // if (ident->type != hand->type) {
+        //     goto restore_flags;
+        // }
+    } else {
+        enable = true;
+        // ident->type = hand->type;
+        ident->flags = hand->flags;
+    }
+
+
+    list_add_tail(&ident->list, &hand->listentry);
+
+    if (enable && kinrange(irqno, PIC8259_IRQ0, PIC8259_IRQ0 + 16)) {
+        pic8259_enable_irq(irqno - PIC8259_IRQ0);
+    }
+
+// restore_flags:
+    irq_restore(flags);
+    return err;
+}
