@@ -120,7 +120,7 @@ static inline size_t
 ring_space(struct ringbuffer * ring)
 {
     using_spin_lock(&ring->lock) {
-        return __ring_space_to_end(&ring->raw);
+        return __ring_space(&ring->raw);
     }
 }
 
@@ -128,7 +128,7 @@ static inline size_t
 ring_space_to_end(struct ringbuffer * ring)
 {
     using_spin_lock(&ring->lock) {
-        return __ring_space(&ring->raw);
+        return __ring_space_to_end(&ring->raw);
     }
 }
 
