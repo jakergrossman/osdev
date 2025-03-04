@@ -23,6 +23,7 @@
 #define __align(n)      __atr(__aligned__(n))
 #define __always_inline inline __atr(always_inline)
 #define __naked         __atr(naked)
+#define __cleanup(cmd)  __atr(cleanup(cmd))
 
 #define __kernel        __atr(address_space(0))
 #define __user          __atr((noderef, address_space(__user)))

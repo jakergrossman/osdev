@@ -3,6 +3,7 @@
 
 #include <denton/bits/bits.h>
 #include <denton/bits/bitops.h>
+#include <denton/bits/bitmap.h>
 #include <asm/findbit.h>
 
 #endif

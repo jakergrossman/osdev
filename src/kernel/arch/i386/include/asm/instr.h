@@ -86,5 +86,11 @@ xchg(virtaddr_t addr, uint32_t val)
 	return result;
 }
 
+static __always_inline void
+pause(void)
+{
+	asm volatile ( "pause" );
+}
+
 
 #endif

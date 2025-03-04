@@ -3,6 +3,7 @@
 
 #include <asm/types.h>
 #include <denton/list.h>
+#include <denton/math.h>
 
 #include <stdbool.h>
 
