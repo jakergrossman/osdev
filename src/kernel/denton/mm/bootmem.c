@@ -87,7 +87,8 @@ bootmem_add(uint64_t start, uint64_t end)
 		return 0;
 	}
 
-	klog_info("registering region 0x%08llX-0x%08llX, %dKB\n", start, end, (end - start) / __KiX(1));
+	klog_info("registering region 0x%08llX-0x%08llX, %lldKB\n",
+			  start, end, (end - start) / __KiX(1));
 
 	for (size_t i = last_memregion; i < ARRAY_LENGTH(memregions); i++) {
 		if (memregions[i].start == 0) {
@@ -98,7 +99,7 @@ bootmem_add(uint64_t start, uint64_t end)
 		}
 	}
 
-	klog_warn("ran out of regions, discardad region 0x%08llX-0x%08llX\n", start, end, (end - start) / __KiX(1));
+	klog_warn("ran out of regions, discarded region 0x%08llX-0x%08llX\n", start, end);
 
 	return -ENOMEM;
 }

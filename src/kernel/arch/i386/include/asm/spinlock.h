@@ -10,6 +10,8 @@ typedef struct spinlock {
 } spinlock_t;
 
 #define SPINLOCK_INIT(n) { .locked = !!(n) }
+#define SPIN_LOCK(name, n) \
+    spinlock_t name = SPINLOCK_INIT(n)
 
 static __always_inline void
 spin_lock(spinlock_t* lock)

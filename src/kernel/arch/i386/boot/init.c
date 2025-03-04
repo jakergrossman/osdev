@@ -69,6 +69,8 @@ void cmain(uint32_t magic, struct multiboot_info* mb_info)
 
 	cpu_early_init();
 
+	klog_init();
+
 	terminal_initialize(EARLY_BOOT_VGA);
 
 	klog_info("==< DENTON BOOTING >==\n");

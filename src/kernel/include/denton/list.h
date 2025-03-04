@@ -65,9 +65,33 @@ list_empty(struct list_head * entry)
 	return entry->next == entry;
 }
 
+/* return whether @entry is placed in a list */
+static inline bool
+list_placed_in_list(struct list_head * entry)
+{
+	return !list_empty(entry);
+}
 
 #define list_entry(iter, type, member) \
     container_of(iter, type, member)
+
+#define list_first_entry(ptr, type, member) \
+    list_entry((ptr)->next, type, member)
+
+#define list_last_entry(ptr, type, member) \
+    list_entry((ptr)->prev, type, member)
+
+#define list_last_entry(ptr, type, member) \
+    list_entry((ptr)->prev, type, member)
+
+#define list_first_entry_or_null(ptr, type, member) \
+    (!list_empty(ptr)? list_first_entry(ptr, type, member): NULL)
+
+#define list_next_entry(pos, member) \
+    list_entry((pos)->member.next, typeof(*(pos)), member)
+
+#define list_prev_entry(pos, member) \
+    list_entry((pos)->member.prev, typeof(*(pos)), member)
 
 #define list_for_each(iter, head) \
     for (iter = (head)->next; iter != (head); iter = iter->next)
@@ -76,5 +100,12 @@ list_empty(struct list_head * entry)
     for (iter = list_entry((head)->next, typeof(*iter), member); \
          &iter->member != (head); \
          iter = list_entry(iter->member.next, typeof(*iter), member))
+
+
+#define list_for_each_entry_safe(head, pos, nxt, member) \
+    for (pos = list_first_entry(head, typeof(*pos), member), \
+            nxt = list_next_entry(pos, member); \
+         &pos->member != (head); \
+         pos = nxt, nxt = list_next_entry(nxt, member))
 
 #endif
