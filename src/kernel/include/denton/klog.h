@@ -69,7 +69,7 @@ void __klog(const char* funcname, enum klog_level level, const char* fmt, ...) _
 #define klog_debug(...) klog(KLOG_DEBUG, __VA_ARGS__)
 #define klog_info(...) klog(KLOG_INFO, __VA_ARGS__)
 #define klog_warn(...) klog(KLOG_WARN, __VA_ARGS__)
-#define klog_error(...) klog(KLOG_ERR, __VA_ARGS__)
+#define klog_error(...) klog(KLOG_ERROR, __VA_ARGS__)
 #define klog_emerg(...) klog(KLOG_EMERG, __VA_ARGS__)
 
 int klog_init(void);
