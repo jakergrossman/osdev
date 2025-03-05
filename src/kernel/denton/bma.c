@@ -11,12 +11,12 @@ static void __bma_alloc(void* bma, size_t pos, size_t count)
 	}
 }
 
-long bma_alloc(void* bma, size_t nitems)
+long bma_alloc(void* bma, size_t bma_len)
 {
 	unsigned long* pbase = bma;
 	long result = 0;
 	do {
-		result = find_next_zero_bit(pbase, nitems, result);
+		result = find_next_zero_bit(pbase, bma_len, result);
 	} while ((result > 0) && (!test_and_set_bit(result, pbase)));
 
 	if (result >= 0) {
@@ -47,11 +47,11 @@ next_run:
 	return -1;
 }
 
-long bma_alloc_consecutive(void* bma, size_t bma_bits, size_t consecutive)
+long bma_alloc_consecutive(void* bma, size_t bma_len, size_t bit_len)
 {
-	long pos = __bma_find_consecutive_pos(bma, bma_bits, consecutive);
+	long pos = __bma_find_consecutive_pos(bma, bma_len, bit_len);
 	if (pos >= 0) {
-		__bma_alloc(bma, pos, consecutive);
+		__bma_alloc(bma, pos, bit_len);
 	}
 	return pos;
 }
