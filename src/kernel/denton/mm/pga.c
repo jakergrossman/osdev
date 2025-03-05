@@ -1,10 +1,11 @@
 #include <denton/mm/pga.h>
 #include <denton/mm/bootmem.h>
 #include <denton/atomic.h>
-#include <denton/bits/bits.h>
 #include <denton/types.h>
 #include <denton/klog.h>
 #include <denton/bits.h>
+#include "denton/bma.h"
+#include <denton/spinlock.h>
 
 #include <asm/bitops.h>
 #include <asm/findbit.h>
@@ -18,7 +19,10 @@ struct {
 	size_t num_pages;
 	unsigned long * free_bitmask;
 	size_t num_bits;
-} ally;
+	spinlock_t lock;
+} ally = {
+	.lock = SPINLOCK_INIT(0),
+};
 
 static void
 __page_mark_free(pfn_t pfn)
@@ -26,17 +30,9 @@ __page_mark_free(pfn_t pfn)
 	clr_bit(pfn, ally.free_bitmask);
 }
 
-static void
-__page_free(pfn_t start, size_t count)
-{
-	for (pfn_t i = start; i < start+count; i++) {
-		page_put(&ally.pages[i]);
-	}
-}
-
 void page_alloc_init(size_t pages, memory_t* memregions, size_t num_regions)
 {
-	klog_debug("Initializing page allocator\n", pages);
+	klog_debug("Initializing page allocator\n");
 
 	ally.num_pages = pages;
 	ally.pages = bootmem_alloc(pages * sizeof(*ally.pages), PAGE_SIZE);
@@ -67,13 +63,13 @@ void page_alloc_init(size_t pages, memory_t* memregions, size_t num_regions)
 		physaddr_t start = PAGE_ALIGN(memregions[i].start);
 		physaddr_t end = PAGE_ALIGN_DOWN(memregions[i].end_ex);
 
-		klog_debug("Adding range [%d,%d] to allocator\n", start / PAGE_SIZE, end / PAGE_SIZE);
+		klog_debug("Adding range [%u,%u] to allocator\n", start / PAGE_SIZE, end / PAGE_SIZE);
 		for (physaddr_t loc = start; loc < end; loc += PAGE_SIZE) {
 			struct page* p = page_from_phys(loc);
 
 			/* all unused bootmem marked valid and available */
 			clr_bit(PAGE_INVALID, &p->flags);
-			__page_mark_free(pfn_from_physaddr(loc));
+			bma_free(ally.free_bitmask, pfn_from_physaddr(loc), 1);
 		}
 	}
 }
@@ -81,27 +77,6 @@ void page_alloc_init(size_t pages, memory_t* memregions, size_t num_regions)
 struct page* page_from_pfn(pfn_t pfn)
 {
 	return ally.pages + pfn;
-}
-
-static long
-__page_find_consecutive_pos(unsigned long* bits, size_t nbits, size_t bitlen)
-{
-	size_t start = 0;
-	while ((start = find_next_zero_bit(bits, nbits, start)) != nbits) {
-		size_t word_idx = start / __BITS_PER_LONG;
-		size_t bit_idx = start % __BITS_PER_LONG;
-		for (int i = bit_idx; i < bit_idx + bitlen; i++) {
-			if (test_bit(i, bits + word_idx)) {
-				start = start + i;
-				goto next_run;
-			}
-		}
-		return start;
-next_run:
-		;
-	}
-
-	return nbits;
 }
 
 /* for when you know what you want */
@@ -121,19 +96,21 @@ __page_alloc(unsigned long pos, int count, unsigned int flags)
 struct page*
 page_alloc(int count, unsigned int flags)
 {
-	// TODO: spinlock
-	long pos = __page_find_consecutive_pos(ally.free_bitmask, ally.num_bits, count);
-	if (pos == ally.num_bits) {
-		return NULL;
+	using_spin_lock(&ally.lock) {
+		long base = bma_alloc_consecutive(ally.free_bitmask, ally.num_bits, count);
+		if (base >= 0) {
+			return __page_alloc(base, count, flags);
+		}
 	}
 
-	return __page_alloc(pos, count, flags);
+	return NULL;
 }
 
 void page_free(struct page* start, size_t count)
 {
-	// TODO: spinlock
-	__page_free(start->page_number, count);
+	using_spin_lock(&ally.lock) {
+		bma_free(ally.free_bitmask, start->page_number, count);
+	}
 }
 
 void page_get(struct page* page)
