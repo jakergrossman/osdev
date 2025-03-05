@@ -6,6 +6,7 @@
 #include <denton/spinlock.h>
 
 #include <asm/paging.h>
+#include <asm/timer.h>
 
 #include <stdint.h>
 #include <stddef.h>
@@ -54,8 +55,12 @@ static struct klog_sink klog_recorder = {
 
 void __klog(const char* funcname, enum klog_level level, const char* fmt, ...)
 {
+    uint32_t millis = timer_get_ms();
+    uint32_t secs = millis / 1000;
+    millis %= 1000;
+
     char buf[1024];
-    size_t prefix_len = snprintf(buf, sizeof(buf), "[ 0.000000 ][%s]: ", funcname);
+    size_t prefix_len = snprintf(buf, sizeof(buf), "[ %4d.%03d ][%s]: ", secs, millis, funcname);
 
     va_list args;
     va_start(args, fmt);
