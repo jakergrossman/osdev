@@ -14,7 +14,7 @@
 void* kmalloc(size_t size, uint32_t flags)
 {
 	// really dumb, for now
-	size_t required_pages = size / PAGE_SIZE;
+	size_t required_pages = (size + PAGE_SIZE-1) / PAGE_SIZE;
 	struct page* start_page = page_alloc(required_pages, flags);
 	return start_page->virt;
 }
@@ -32,7 +32,7 @@ void* kzalloc(size_t size, uint32_t flags)
 void kfree(void* mem, size_t size)
 {
 	// really dumb, for now
-	size_t required_pages = size / PAGE_SIZE;
+	size_t required_pages = (size + PAGE_SIZE-1) / PAGE_SIZE;
 	page_free(page_from_virt(mem), required_pages);
 }
 
