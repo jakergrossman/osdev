@@ -8,8 +8,8 @@
 
 #define V2PL(n) ((n) - __KERNEL_VIRTBASE)
 #define P2VL(n) ((n) + __KERNEL_VIRTBASE)
-#define V2P(n) ((uintptr_t)(n) & ~__KERNEL_VIRTBASE)
-#define P2V(n) ((uintptr_t)(n) |  __KERNEL_VIRTBASE)
+#define V2P(n) ((physaddr_t)(n) & ~__KERNEL_VIRTBASE)
+#define P2V(n) ((physaddr_t)(n) |  __KERNEL_VIRTBASE)
 #define v_to_p(va) (physaddr_t)(V2P((uintptr_t)(va)))
 #define p_to_v(pa) (virtaddr_t)(P2V((uintptr_t)(pa)))
 

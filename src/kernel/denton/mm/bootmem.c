@@ -1,3 +1,4 @@
+#include "denton/heap.h"
 #include "denton/mm/pga.h"
 #include "denton/panic.h"
 #include <denton/errno.h>
@@ -20,7 +21,6 @@ extern void* __KERNEL_END;
 
 static memory_t memregions[64];
 static size_t last_memregion = 0;
-static pfn_t highest_page = 0;
 
 int
 bootmem_add(uint64_t start, uint64_t end)
@@ -38,13 +38,6 @@ bootmem_add(uint64_t start, uint64_t end)
 			return 0;
 		}
 	}
-
-
-	/* keep track of the highest page of physical memory
-	 * so we know how much we have for the page allocator
-	 */
-	pfn_t last_page = pfn_from_physaddr(end);
-	highest_page = kmax(highest_page, last_page);
 
 	/* check if this region overlaps with kernel, and exclude
 	 * the portions that do
@@ -88,7 +81,7 @@ bootmem_add(uint64_t start, uint64_t end)
 	}
 
 	klog_info("registering region 0x%08llX-0x%08llX, %lldKB\n",
-			  start, end, (end - start) / __KiX(1));
+			  start, end, (end - start) / __KiX(1)*1024);
 
 	for (size_t i = last_memregion; i < ARRAY_LENGTH(memregions); i++) {
 		if (memregions[i].start == 0) {
@@ -134,5 +127,24 @@ void* bootmem_alloc(size_t len, size_t alignment)
 
 void bootmem_setup_pga(void)
 {
-	page_alloc_init(highest_page, memregions, last_memregion);
+	klog_debug("Initializing page allocator\n");
+	int pages = page_alloc_init(&bootmem_ally, memregions, last_memregion);
+	klog_info("page allocator has %d free pages\n", pages);
 }
+
+#include "allocator.c"
+
+static void* bootmem_ally_alloc(void* ptr, size_t len, pgf_t flags)
+{
+	return bootmem_alloc(len, pgf_align(flags));
+}
+
+static const struct allocator_ops bootmem_ally_ops = {
+	.alloc = bootmem_ally_alloc,
+	.free = NULL,
+};
+
+const struct allocator bootmem_ally = {
+	.ptr = NULL,
+	.ops = &bootmem_ally_ops,
+};

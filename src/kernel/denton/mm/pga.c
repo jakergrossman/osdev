@@ -1,126 +1,77 @@
-#include <denton/mm/pga.h>
-#include <denton/mm/bootmem.h>
+#include "bitmap_pga.h"
+
+#include "denton/mm/bootmem.h"
+#include "denton/types.h"
+#include <denton/compiler.h>
 #include <denton/atomic.h>
-#include <denton/types.h>
-#include <denton/klog.h>
-#include <denton/bits.h>
-#include "denton/bma.h"
-#include <denton/spinlock.h>
+#include <denton/list.h>
+#include <denton/mm/pga.h>
 
-#include <asm/bitops.h>
-#include <asm/findbit.h>
 #include <asm/paging.h>
+#include <asm/memlayout.h>
 
-#include <string.h>
 #include <stdlib.h>
 
-struct {
-	struct page * pages;
-	size_t num_pages;
-	unsigned long * free_bitmask;
-	size_t num_bits;
-	spinlock_t lock;
-} ally = {
-	.lock = SPINLOCK_INIT(0),
-};
+// TODO: compile-time selectable somehow
+static const struct pga* __pga = &bitmap_pga;
 
-static void
-__page_mark_free(pfn_t pfn)
+int  page_alloc_init(const struct allocator* bootally, memory_t* regions, size_t num_regions)
 {
-	clr_bit(pfn, ally.free_bitmask);
+	int ret = 0;
+	if (__pga->ops->setup) {
+		ret = __pga->ops->setup(__pga->ctx, bootally, regions, num_regions);
+	}
+	return ret;
 }
 
-void page_alloc_init(size_t pages, memory_t* memregions, size_t num_regions)
+
+struct page* page_alloc(int order, unsigned int flags)
 {
-	klog_debug("Initializing page allocator\n");
+	// WARN_ON(!__pga->ops->alloc)
+	return __pga->ops->alloc(__pga->ctx, order, flags);
+}
 
-	ally.num_pages = pages;
-	ally.pages = bootmem_alloc(pages * sizeof(*ally.pages), PAGE_SIZE);
 
-	/* lowest bits required that is aligned to the word size */
-	ally.num_bits = ALIGN_2(pages, __BITS_PER_LONG);
-	ally.free_bitmask = bootmem_alloc(ally.num_bits / 8, PAGE_SIZE);
-
-	/* initially:
-	 *  - all pages are zeroed and claimed
-	 *  - all pages are set invalid
-	 */
-	memset(ally.pages, 0, pages * sizeof(*ally.pages));
-	memset(ally.free_bitmask, ~0, ally.num_bits * 8);
-
-	for (size_t page = 0; page < pages; page++) {
-		struct page* p = &ally.pages[page];
-		p->page_number = page;
-		p->virt = p_to_v((p->page_number) << PAGE_SHIFT);
-		set_bit(PAGE_INVALID, &p->flags);
-	}
-
-	for (int i = 0; i < num_regions; i++) {
-		if (!memregions[i].start) {
-			continue;
-		}
-
-		physaddr_t start = PAGE_ALIGN(memregions[i].start);
-		physaddr_t end = PAGE_ALIGN_DOWN(memregions[i].end_ex);
-
-		klog_debug("Adding range [%u,%u] to allocator\n", start / PAGE_SIZE, end / PAGE_SIZE);
-		for (physaddr_t loc = start; loc < end; loc += PAGE_SIZE) {
-			struct page* p = page_from_phys(loc);
-
-			/* all unused bootmem marked valid and available */
-			clr_bit(PAGE_INVALID, &p->flags);
-			bma_free(ally.free_bitmask, pfn_from_physaddr(loc), 1);
-		}
+void page_free(struct page* pg, size_t count)
+{
+	if (__pga->ops->free) {
+		__pga->ops->free(__pga->ctx, pg, count);
 	}
 }
 
-struct page* page_from_pfn(pfn_t pfn)
-{
-	return ally.pages + pfn;
-}
 
-/* for when you know what you want */
-static struct page*
-__page_alloc(unsigned long pos, int count, unsigned int flags)
+struct page* page_lookup(page_frame_t page_frame)
 {
-	struct page* page_base = &ally.pages[pos];
-	for (size_t i = 0; i < count; i++) {
-		struct page* page = &page_base[i];
-		set_bit(pos+i, ally.free_bitmask);
-		page_get(page);
+	// WARN_ON(!__pga->ops->lookup)
+	struct page* page = __pga->ops->lookup(__pga->ctx, page_frame);
+	
+	if (page == NULL) {
+		return NULL;
 	}
 
-	return page_base;
+	return (page->flags & PAGE_INVALID) ? NULL : page;
 }
 
-struct page*
-page_alloc(int count, unsigned int flags)
-{
-	using_spin_lock(&ally.lock) {
-		long base = bma_alloc_consecutive(ally.free_bitmask, ally.num_bits, count);
-		if (base >= 0) {
-			return __page_alloc(base, count, flags);
-		}
-	}
 
-	return NULL;
+page_frame_t page_frame_from_physaddr(physaddr_t phys)
+{
+	return (page_frame_t)(phys >> PAGE_SHIFT);
 }
 
-void page_free(struct page* start, size_t count)
+
+struct page * page_from_phys(physaddr_t phys)
 {
-	using_spin_lock(&ally.lock) {
-		bma_free(ally.free_bitmask, start->page_number, count);
-	}
+	return page_lookup(page_frame_from_physaddr(phys));
 }
 
-void page_get(struct page* page)
+
+struct page * page_from_virt(virtaddr_t virt)
 {
-	atomic_inc(&page->use_count);
+	return page_lookup(page_frame_from_physaddr(V2P(virt)));
 }
 
-void page_put(struct page* page)
+
+physaddr_t page_to_phys(struct page * pg)
 {
-	if (atomic_dec_and_test(&page->use_count)) {
-		__page_mark_free(page->page_number);
-	}
+	return (pg->page_number << PAGE_SHIFT);
 }

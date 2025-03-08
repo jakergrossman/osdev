@@ -80,7 +80,7 @@ void paging_setup_kernelspace(void)
     // FIXME:
     terminal_update_base(INIT_VGA);
 
-    klog_trace("page directory at 0x%08X installed\n", v_to_p(&__kernel_pgdir));
+    klog_trace("page directory at 0x%p installed\n", &__kernel_pgdir);
 }
 
 void paging_set_directory(physaddr_t phys)

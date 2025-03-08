@@ -9,12 +9,13 @@
 #include <string.h>
 
 #include "heap.h"
+#include "asm/paging.h"
 
 // TODO: real allocator
 void* kmalloc(size_t size, uint32_t flags)
 {
 	// really dumb, for now
-	size_t required_pages = (size + PAGE_SIZE-1) / PAGE_SIZE;
+	size_t required_pages = PAGE_ALIGN(size) / PAGE_SIZE;
 	struct page* start_page = page_alloc(required_pages, flags);
 	return start_page->virt;
 }

@@ -1,26 +1,16 @@
 #ifndef __DENTON_MM_PGA_H
 #define __DENTON_MM_PGA_H
 
-#include "denton/mm/bootmem.h"
-#include "denton/types.h"
 #include <denton/compiler.h>
-#include <denton/atomic.h>
-#include <denton/list.h>
+#include <denton/types.h>
+#include <denton/mm/mm_types.h>
 
-#include <asm/paging.h>
-#include <asm/memlayout.h>
+#include <stdlib.h>
 
-typedef uint32_t pfn_t;
-
-static inline pfn_t
-pfn_from_physaddr(physaddr_t phys)
-{
-	return (pfn_t)(phys >> PAGE_SHIFT);
-}
 
 struct page {
 	atomic_t use_count;
-	pfn_t page_number;
+	page_frame_t page_number;
 
 	/* log2 of the number of pages allocated with this one */
 	int order;
@@ -35,30 +25,63 @@ enum page_flag {
 	PAGE_INVALID = 31,
 };
 
-struct page* page_from_pfn(pfn_t pfn);
+struct allocator;
 
-static __always_inline struct page*
-page_from_phys(physaddr_t phys)
-{
-	return page_from_pfn(pfn_from_physaddr(phys));
-}
+/**
+ * struct pga_ops - Page Allocator operations
+ *
+ * This structure describes operations needed to
+ * manage physical pages.
+ */
+struct pga_ops {
+	/**
+	 * setup() - initialize the page allocator
+	 * @ctx: token representing the allocator implementation
+	 * @allocator: the bootstrap memory allocator for memory needed by the PGA
+	 * @regions: list of memory regions available to by allocated
+	 * @num_regions: count of @regions
+	 *
+	 * Returns 0 on success or a negative error code on failure.
+	 */
+	int (*setup)(void * ctx, const struct allocator* ally, const memory_t * regions, size_t num_regions);
 
-static __always_inline struct page*
-page_from_virt(virtaddr_t virt)
-{
-	return page_from_pfn(pfn_from_physaddr(V2P(virt)));
-}
+	/**
+	 * alloc() - allocate a (TODO: physically contiguous? bad constraint) number of pages
+	 * @ctx: token representing the allocator implementation
+	 * @order: the number of pages required. rounded up to the nearest power of 2
+	 * @flags: page allocation flags
+	 */
+	struct page * (*alloc)(void * ctx, unsigned int order, pgf_t flags);
 
-static __always_inline physaddr_t
-page_to_phys(struct page* pg)
-{
-	return (pg->page_number << PAGE_SHIFT);
-}
+	/**
+	 * free() - free a number of pages
+	 */
+	void (*free)(void * ctx, struct page * pagebase, unsigned int order);
 
-void page_alloc_init(size_t pages, memory_t* regions, size_t num_regions);
-struct page* page_alloc(int order, unsigned int flags);
-void page_free(struct page* pg, size_t count);
-void page_get(struct page* page);
-void page_put(struct page* page);
+	/**
+	 * lookup() - get a pointer to page data, if it is a valid page
+	 */
+	struct page * (*lookup)(void * ctx, page_frame_t page_frame);
+};
+
+/**
+ * abstract page allocator
+ * @ctx: allocator-specific token for @ops
+ * @ops: allocator operations
+ * */
+struct pga {
+	void* ctx;
+	const struct pga_ops* ops;
+};
+
+int           page_alloc_init(const struct allocator* bootally, memory_t * regions, size_t num_regions);
+struct page * page_alloc(int order, unsigned int flags);
+void          page_free(struct page * pg, size_t count);
+struct page * page_lookup(page_frame_t page_frame);
+
+page_frame_t  page_frame_from_physaddr(physaddr_t phys);
+physaddr_t    page_to_phys(struct page * pg);
+struct page * page_from_phys(physaddr_t phys);
+struct page * page_from_virt(virtaddr_t virt);
 
 #endif

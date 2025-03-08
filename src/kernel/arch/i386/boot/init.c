@@ -74,8 +74,9 @@ void cmain(uint32_t magic, struct multiboot_info* mb_info)
 	terminal_initialize(EARLY_BOOT_VGA);
 
 	klog_info("==< DENTON BOOTING >==\n");
-	klog_info("kernel physical location: 0x%08X-0x%08X\n", V2P(&__KERNEL_START), V2P(&__KERNEL_END));
-	klog_info("kernel virtual  location: 0x%08X-0x%08X\n", &__KERNEL_START, &__KERNEL_END);
+	klog_info("kernel physical location: 0x%8p-0x%8p\n", 
+			(void*)V2P(&__KERNEL_START), (void*)V2P(&__KERNEL_END));
+	klog_info("kernel virtual  location: 0x%8p-0x%8p\n", &__KERNEL_START, &__KERNEL_END);
 
 	if (magic == MULTIBOOT_BOOTLOADER_MAGIC) {
 		handle_multiboot_info(mb_info);
@@ -90,7 +91,6 @@ void cmain(uint32_t magic, struct multiboot_info* mb_info)
 
 	/* handoff from bootmem to physical frame allocator */
 	bootmem_setup_pga();
-	kheap_init();
 
 	/* now that we have dynamic memory, let's handle the command line */
 	kernel_cmdline_init(__kernel_cmdline);

@@ -73,4 +73,13 @@ __cpu_read_crN_decl(6);
 __cpu_read_crN_decl(7);
 __cpu_read_crN_decl(8);
 
+static inline void
+arch_cpu_halt(void)
+{
+	asm volatile (
+		"	cli\n"
+		"1: jmp 1b\n"
+	);
+}
+
 #endif
