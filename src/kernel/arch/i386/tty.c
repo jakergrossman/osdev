@@ -37,7 +37,7 @@ void terminal_clear(void)
 
 void terminal_initialize(uint32_t base) {
 	terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
-    terminal_update_base(base);
+	terminal_update_base(base);
 	terminal_clear();
 }
 

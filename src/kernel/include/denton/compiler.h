@@ -32,13 +32,13 @@
 #define __percpu        __atr((noderef, address_space(__percpu)))
 
 #define __comptime_assert(cond, msg, prefix, suffix) \
-    do {\
-        extern void prefix ## suffix (void) __comptime_error(msg); \
-        if (!(cond)) prefix ## suffix (); \
-    } while (0);
+	do {\
+		extern void prefix ## suffix (void) __comptime_error(msg); \
+		if (!(cond)) prefix ## suffix (); \
+	} while (0);
 
 #define comptime_assert(cond, msg) \
-    __comptime_assert(cond, msg, __compiletime_assert, __COUNTER__)
+	__comptime_assert(cond, msg, __compiletime_assert, __COUNTER__)
 
 /*
  * This returns a constant expression while determining if an argument is

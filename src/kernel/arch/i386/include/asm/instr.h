@@ -8,12 +8,12 @@
 
 static __always_inline void cli(void)
 {
-    asm volatile ( "cli" );
+	asm volatile ( "cli" );
 }
 
 static __always_inline void sti(void)
 {
-    asm volatile ( "sti" );
+	asm volatile ( "sti" );
 }
 
 static __always_inline void interrupt(uint8_t irqno)
@@ -23,7 +23,7 @@ static __always_inline void interrupt(uint8_t irqno)
 
 static __always_inline void hlt(void)
 {
-    asm volatile ( "hlt" );
+	asm volatile ( "hlt" );
 }
 
 static __always_inline void

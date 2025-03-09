@@ -12,7 +12,7 @@
 })
 
 #define __careful_range(x, lo, hi) \
-    __careful_range_once(x, lo, hi, __UNIQ_ID(x_), __UNIQ_ID(lo_), __UNIQ_ID(hi_))
+	__careful_range_once(x, lo, hi, __UNIQ_ID(x_), __UNIQ_ID(lo_), __UNIQ_ID(hi_))
 
 #define __careful_cmp(op, x, y) \
 	__careful_cmp_once(op, x, y, __UNIQ_ID(x_), __UNIQ_ID(y_))

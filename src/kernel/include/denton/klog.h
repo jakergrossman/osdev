@@ -16,23 +16,23 @@ enum klog_level {
 };
 
 enum klog_info_flag {
-    KLOGF_FORCE_CONSOLE = 1,
-    KLOGF_NEWLINE = 2,
-    KLOGF_CONTINUE = 3,
+	KLOGF_FORCE_CONSOLE = 1,
+	KLOGF_NEWLINE = 2,
+	KLOGF_CONTINUE = 3,
 };
 
 struct klog_info {
-    uint64_t        sequence;
-    uint64_t        timestamp_ns;
-    size_t          text_len;
-    enum klog_level level;
-    uint32_t        caller_token;
+	uint64_t        sequence;
+	uint64_t        timestamp_ns;
+	size_t          text_len;
+	enum klog_level level;
+	uint32_t        caller_token;
 };
 
 struct klog_record {
-    struct klog_info info;
-    char* buf;
-    size_t bufsz;
+	struct klog_info info;
+	char* buf;
+	size_t bufsz;
 };
 
 /**

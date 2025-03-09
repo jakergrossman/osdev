@@ -11,7 +11,7 @@ typedef struct spinlock {
 
 #define SPINLOCK_INIT(n) { .locked = !!(n) }
 #define SPIN_LOCK(name, n) \
-    spinlock_t name = SPINLOCK_INIT(n)
+	spinlock_t name = SPINLOCK_INIT(n)
 
 static __always_inline void
 spin_lock(spinlock_t* lock)
@@ -23,7 +23,7 @@ spin_lock(spinlock_t* lock)
 static __always_inline void
 spin_unlock(spinlock_t* lock)
 {
-    __sync_synchronize();
+	__sync_synchronize();
 	lock->locked = 0;
 }
 
@@ -36,7 +36,7 @@ spin_unlock_cleanup(spinlock_t** lock)
 static inline void
 spin_lock_cleanup(spinlock_t** lock)
 {
-    spin_lock(*lock);
+	spin_lock(*lock);
 }
 
 /* Wraps acquiring and releaseing a spinlock. Usages of 'using_spinlock' can't

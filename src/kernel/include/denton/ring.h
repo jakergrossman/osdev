@@ -8,34 +8,34 @@
 #include <stddef.h>
 
 struct raw_ringbuffer {
-    void* mem;
-    size_t len;
-    size_t tail;
-    size_t head;
+	void* mem;
+	size_t len;
+	size_t tail;
+	size_t head;
 };
 
 struct ringbuffer {
-    struct raw_ringbuffer raw;
-    spinlock_t lock;
+	struct raw_ringbuffer raw;
+	spinlock_t lock;
 };
 
 static __always_inline struct raw_ringbuffer
 __RING_INIT(void* memory, size_t size)
 {
-    return (struct raw_ringbuffer){
-        .mem = memory,
-        .len = size,
-        .tail = 0,
-        .head = 0,
-    };
+	return (struct raw_ringbuffer){
+		.mem = memory,
+		.len = size,
+		.tail = 0,
+		.head = 0,
+	};
 }
 
 static inline void
 __ring_init(struct raw_ringbuffer* ring, void* memory, size_t size)
 {
-    if (memory && size) {
-        *ring = __RING_INIT(memory, size);
-    }
+	if (memory && size) {
+		*ring = __RING_INIT(memory, size);
+	}
 }
 
 /**
@@ -62,74 +62,74 @@ size_t __ring_space_to_end(const struct raw_ringbuffer* ring);
 static __always_inline struct ringbuffer
 RING_INIT(void* memory, size_t size)
 {
-    return (struct ringbuffer){
-        .raw = __RING_INIT(memory, size),
-        .lock = SPINLOCK_INIT(0),
-    };
+	return (struct ringbuffer){
+		.raw = __RING_INIT(memory, size),
+		.lock = SPINLOCK_INIT(0),
+	};
 }
 
 static inline void
 ring_init(struct ringbuffer* ring, void* memory, size_t size)
 {
-    if (memory && size) {
-        *ring = RING_INIT(memory, size);
-    }
+	if (memory && size) {
+		*ring = RING_INIT(memory, size);
+	}
 }
 
 static inline int
 ring_put(struct ringbuffer * ring, void * memory, size_t len)
 {
-    using_spin_lock(&ring->lock) {
-        return __ring_put(&ring->raw, memory, len);
-    }
+	using_spin_lock(&ring->lock) {
+		return __ring_put(&ring->raw, memory, len);
+	}
 }
 
 static inline int
 ring_get(struct ringbuffer * ring, void * memory, size_t len)
 {
-    using_spin_lock(&ring->lock) {
-        return __ring_get(&ring->raw, memory, len);
-    }
+	using_spin_lock(&ring->lock) {
+		return __ring_get(&ring->raw, memory, len);
+	}
 }
 
 static inline void
 ring_flush(struct ringbuffer * ring)
 {
-    using_spin_lock(&ring->lock) {
-        __ring_flush(&ring->raw);
-    }
+	using_spin_lock(&ring->lock) {
+		__ring_flush(&ring->raw);
+	}
 }
 
 static inline size_t
 ring_count(struct ringbuffer * ring)
 {
-    using_spin_lock(&ring->lock) {
-        return __ring_count(&ring->raw);
-    }
+	using_spin_lock(&ring->lock) {
+		return __ring_count(&ring->raw);
+	}
 }
 
 static inline size_t
 ring_count_to_end(struct ringbuffer * ring)
 {
-    using_spin_lock(&ring->lock) {
-        return __ring_count_to_end(&ring->raw);
-    }
+	using_spin_lock(&ring->lock) {
+		return __ring_count_to_end(&ring->raw);
+	}
 }
 
 static inline size_t
 ring_space(struct ringbuffer * ring)
 {
-    using_spin_lock(&ring->lock) {
-        return __ring_space(&ring->raw);
-    }
+	using_spin_lock(&ring->lock) {
+		return __ring_space(&ring->raw);
+	}
 }
 
 static inline size_t
 ring_space_to_end(struct ringbuffer * ring)
 {
-    using_spin_lock(&ring->lock) {
-        return __ring_space_to_end(&ring->raw);
-    }
+	using_spin_lock(&ring->lock) {
+		return __ring_space_to_end(&ring->raw);
+	}
 }
 
 

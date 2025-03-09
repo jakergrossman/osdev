@@ -8,13 +8,13 @@
 struct task;
 
 struct cpu_info {
-    int cpu_id;
-    int intr_count;
+	int cpu_id;
+	int intr_count;
 
-    struct gdt_entry gdt_entries[GDT_ENTRIES];
+	struct gdt_entry gdt_entries[GDT_ENTRIES];
 
-    /* self reference pointer is handy to stuff into per-cpu GDT variable */
-    struct cpu_info* self;
+	/* self reference pointer is handy to stuff into per-cpu GDT variable */
+	struct cpu_info* self;
 };
 
 void cpu_early_init(void);
@@ -33,24 +33,24 @@ extern unsigned long __force_order;
 #define __cpu_read_crN_decl(n) \
 static inline uint32_t cpu_read_cr##n (void) \
 { \
-    uint32_t val = 0; \
-    asm volatile ( \
-        "mov %%cr" __stringify(n) ", %0" \
-        : "=r" (val), "=m" (__force_order) \
-    ); \
-    return val; \
+	uint32_t val = 0; \
+	asm volatile ( \
+		"mov %%cr" __stringify(n) ", %0" \
+		: "=r" (val), "=m" (__force_order) \
+	); \
+	return val; \
 } 
 
 /** declare an ordered write function on a control register using volatile asm */
 #define __cpu_write_crN_decl(n) \
 static inline void cpu_write_cr##n (uint32_t val) \
 { \
-    asm volatile ( \
-        "mov %0, %%cr" __stringify(n) \
-        : \
-        : "r" (val), "m" (__force_order) \
-        : "memory" \
-    ); \
+	asm volatile ( \
+		"mov %0, %%cr" __stringify(n) \
+		: \
+		: "r" (val), "m" (__force_order) \
+		: "memory" \
+	); \
 } \
 
 __cpu_write_crN_decl(0);

@@ -14,18 +14,18 @@
 #include <asm/irq_handler.h>
 
 enum irq_type {
-    IRQ_INTERRUPT,
-    IRQ_SYSCALL,
+	IRQ_INTERRUPT,
+	IRQ_SYSCALL,
 };
 
 
 typedef void (*irqfn_t)(struct irq_frame * frame, void * privdata);
 
 struct irq_handler {
-    char* name;
+	char* name;
 	irqfn_t irqfn;
-    void* privdata;
-    enum irq_type type;
+	void* privdata;
+	enum irq_type type;
 	struct list_head listentry;
 	unsigned int flags;
 };
@@ -37,14 +37,14 @@ irq_handler_init(struct irq_handler* hand)
 }
 
 #define IRQ_HANDLER_INIT(hd, nm, hand, priv, typ, fl) \
-    { \
-        .name = nm, \
-        .irqfn = hand, \
-        .privdata = priv, \
-        .type = typ, \
-        .flags = fl, \
-        .listentry = LIST_HEAD_INIT((hd).listentry), \
-    }
+	{ \
+		.name = nm, \
+		.irqfn = hand, \
+		.privdata = priv, \
+		.type = typ, \
+		.flags = fl, \
+		.listentry = LIST_HEAD_INIT((hd).listentry), \
+	}
 
 
 
@@ -63,7 +63,7 @@ typedef int irq_flags_t;
 static inline __must_check uint32_t
 irq_save(void)
 {
-    return eflags_read();
+	return eflags_read();
 }
 
 #define irq_save() eflags_read()

@@ -5,8 +5,8 @@
 #include <stdint.h>
 
 enum {
-    EARLY_BOOT_VGA = 0xC03FF000, // VGA mem after bootloader
-    INIT_VGA = 0xC00B8000, // VGA mem after cmain
+	EARLY_BOOT_VGA = 0xC03FF000, // VGA mem after bootloader
+	INIT_VGA = 0xC00B8000, // VGA mem after cmain
 };
 
 void terminal_initialize(uint32_t);

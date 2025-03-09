@@ -19,8 +19,8 @@
 
 
 #if (defined __has_attribute \
-     && (!defined __clang_minor__ \
-         || 3 < __clang_major__ + (5 <= __clang_minor__)))
+	 && (!defined __clang_minor__ \
+		 || 3 < __clang_major__ + (5 <= __clang_minor__)))
 # define __dlibc_has_attribute(attr) __has_attribute (attr)
 #else
 # define __dlibc_has_attribute(attr) 0
