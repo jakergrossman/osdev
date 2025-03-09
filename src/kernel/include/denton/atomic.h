@@ -5,6 +5,7 @@
 #include <asm/atomic.h>
 
 typedef atomic32_t atomic_t;
+#define ATOMIC_INIT(...) ATOMIC32_INIT(__VA_ARGS__)
 #define atomic_get(...) atomic32_get(__VA_ARGS__)
 #define atomic_set(...) atomic32_set(__VA_ARGS__)
 #define atomic_sub(...) atomic32_sub(__VA_ARGS__)
