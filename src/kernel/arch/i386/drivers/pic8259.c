@@ -33,12 +33,12 @@ static atomic32_t system_tick = ATOMIC32_INIT(0);
 
 static void pic_master_set_mask(void)
 {
-	outb(PIC8259_IO_PIC1 + 1, irqmask & 0xFF);
+	outb(irqmask & 0xFF, PIC8259_IO_PIC1 + 1);
 }
 
 static void pic_slave_set_mask(void)
 {
-	outb(PIC8259_IO_PIC2 + 1, irqmask >> 8);
+	outb(irqmask >> 8, PIC8259_IO_PIC2 + 1);
 }
 
 static void timer_callback(struct irq_frame* frame, void* privdata)
@@ -49,24 +49,24 @@ static void timer_callback(struct irq_frame* frame, void* privdata)
 void pic8259_init(void)
 {
 	/* remap PIC1 to IRQ32 and PIC2 at IRQ40 */
-	outb(PIC8259_IO_PIC1 + 1, 0xFF);
-	outb(PIC8259_IO_PIC2 + 1, 0xFF);
+	outb(0xFF, PIC8259_IO_PIC1 + 1);
+	outb(0xFF, PIC8259_IO_PIC2 + 1);
 
 	// restart PIC
-	outb(PIC8259_IO_PIC1, 0x11);
-	outb(PIC8259_IO_PIC2, 0x11);
+	outb(0x11, PIC8259_IO_PIC1);
+	outb(0x11, PIC8259_IO_PIC2);
 
 	// PIC1 now starts at PIC8259_IRQ0
-	outb(PIC8259_IO_PIC1 + 1, PIC8259_IRQ0);
+	outb(PIC8259_IRQ0, PIC8259_IO_PIC1 + 1);
 	// PIC2 now starts at PIC8259_IRQ8
-	outb(PIC8259_IO_PIC2 + 1, PIC8259_IRQ0 + 8);
+	outb(PIC8259_IRQ0 + 8, PIC8259_IO_PIC2 + 1);
 
 	// setup cascading
-	outb(PIC8259_IO_PIC1 + 1, 1 << PIC8259_IRQ_SLAVE);
-	outb(PIC8259_IO_PIC2 + 1, PIC8259_IRQ_SLAVE);
+	outb(1 << PIC8259_IRQ_SLAVE, PIC8259_IO_PIC1 + 1);
+	outb(PIC8259_IRQ_SLAVE, PIC8259_IO_PIC2 + 1);
 
-	outb(PIC8259_IO_PIC1 + 1, 0x01);
-	outb(PIC8259_IO_PIC2 + 1, 0x01); // done!
+	outb(0x01, PIC8259_IO_PIC1 + 1);
+	outb(0x01, PIC8259_IO_PIC2 + 1); // done!
 
 	pic_master_set_mask();
 	pic_slave_set_mask();
@@ -80,8 +80,8 @@ void pic8259_timer_init(void)
 		PIC8259_TIMER_RATGEN |
 		PIC8259_TIMER_16BIT
 	);
-	outb(PIC8259_TIMER_IOBASE, PIC8259_TIMER_DIV(TIMER_TICKS_PER_SECOND) % 256);
-	outb(PIC8259_TIMER_IOBASE, PIC8259_TIMER_DIV(TIMER_TICKS_PER_SECOND) / 256);
+	outb(PIC8259_TIMER_DIV(TIMER_TICKS_PER_SECOND) % 256, PIC8259_TIMER_IOBASE);
+	outb(PIC8259_TIMER_DIV(TIMER_TICKS_PER_SECOND) / 256, PIC8259_TIMER_IOBASE);
 
 	int err = irq_register_handler(
 			"systick", 0, timer_callback, IRQ_INTERRUPT, 0);
@@ -115,14 +115,14 @@ void pic8259_disable_irq(int irqno)
 static uint8_t
 pic8259_read_master_isr(void)
 {
-	outb(PIC8259_IO_PIC1, PIC8259_READ_ISR);
+	outb(PIC8259_READ_ISR, PIC8259_IO_PIC1);
 	return inb(PIC8259_IO_PIC1);
 }
 
 static uint8_t
 pic8259_read_slave_isr(void)
 {
-	outb(PIC8259_IO_PIC2, PIC8259_READ_ISR);
+	outb(PIC8259_READ_ISR, PIC8259_IO_PIC2);
 	return inb(PIC8259_IO_PIC2);
 }
 
@@ -136,16 +136,16 @@ void pic8259_send_eoi(int irq)
 		uint8_t bit = BIT(irq - 8);
 
 		if (isr & bit) {
-			outb(PIC8259_IO_PIC2, PIC8259_EOI);
+			outb(PIC8259_EOI, PIC8259_IO_PIC2);
 		}
 
-		outb(PIC8259_IO_PIC1, PIC8259_EOI);
+		outb(PIC8259_EOI, PIC8259_IO_PIC1);
 	} else {
 		uint8_t isr = pic8259_read_master_isr();
 		uint8_t bit = BIT(irq);
 
 		if (isr & bit) {
-			outb(PIC8259_IO_PIC1, PIC8259_EOI);
+			outb(PIC8259_EOI, PIC8259_IO_PIC1);
 		}
 	}
 	spin_unlock(&irqmask_lock);

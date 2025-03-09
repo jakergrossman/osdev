@@ -27,7 +27,7 @@ static __always_inline void hlt(void)
 }
 
 static __always_inline void
-outb(uint16_t port, uint8_t value)
+outb(uint8_t value, uint16_t port)
 {
 	asm volatile (
 		"outb %1, %0"
