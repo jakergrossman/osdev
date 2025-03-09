@@ -1,4 +1,4 @@
-#include "denton/heap.h"
+
 #include <denton/klog.h>
 #include <denton/kmain.h>
 #include <denton/kparam.h>
@@ -12,6 +12,7 @@
 #include <asm/memlayout.h>
 #include <asm/paging.h>
 #include <asm/drivers/pic8259.h>
+#include <asm/drivers/early_console.h>
 #include <asm/instr.h>
 #include <asm/irq.h>
 #include <asm/idt.h>
@@ -70,6 +71,10 @@ void cmain(uint32_t magic, struct multiboot_info* mb_info)
 	cpu_early_init();
 
 	klog_init();
+
+	if (early_com_init(COM1, 115200) == 0) {
+		early_com_register_klog();
+	}
 
 	terminal_initialize(EARLY_BOOT_VGA);
 
