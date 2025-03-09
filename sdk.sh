@@ -144,13 +144,9 @@ case "${subcmd}" in
             usage 1
         fi
 
-			# -no-reboot \
-			# -no-shutdown \
         qemu-system-i386 \
-            -serial stdio \
-            -vga virtio \
-			-d int \
-            -D qemu.log \
+			-no-reboot \
+			-no-shutdown \
             -cdrom build/denton.iso \
             $@
         ;;
