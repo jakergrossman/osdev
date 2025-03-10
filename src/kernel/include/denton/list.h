@@ -65,6 +65,15 @@ list_empty(struct list_head * entry)
 	return entry->next == entry;
 }
 
+static inline void
+list_rotate(struct list_head * entry)
+{
+	struct list_head* head = entry;
+	struct list_head* prev = head->prev;
+	list_del(entry);
+	list_add_tail(head, prev);
+}
+
 /* return whether @entry is placed in a list */
 static inline bool
 list_placed_in_list(struct list_head * entry)

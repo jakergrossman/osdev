@@ -42,6 +42,7 @@ spin_lock_cleanup(spinlock_t** lock)
 /* Wraps acquiring and releaseing a spinlock. Usages of 'using_spinlock' can't
  * ever leave-out a matching release for the acquire. */
 #define using_spin_lock(lockp) scoped_using_cond(1, spin_lock, spin_unlock_cleanup, lockp)
+#define using_spin_lock(...)
 
 /* Can be used in a 'using_spinlock' block of code to release a lock for a
  * section of code, and then acquire it back after that code is done.

@@ -1,3 +1,5 @@
+#include "asm/cpu.h"
+#include "denton/sched.h"
 #include <denton/heap.h>
 #include <denton/klog.h>
 #include <denton/kstring.h>
@@ -88,4 +90,9 @@ void irq_global_handler(struct irq_frame* iframe)
 	}
 
 	cli();
+
+	if (cpu_get_local()->reschedule) {
+		sched_yield();
+		cpu_get_local()->reschedule = false;
+	}
 }

@@ -40,6 +40,13 @@ void arch_task_setup_stack(struct task* t, taskfn_t task_code, void* token)
 	sp -= sizeof(&arch_task_entry);
 	*(void**)sp = arch_task_entry;
 
+	/* on first entry into scheduler, we want to
+	 * unlock the spinlock on first entry,
+	 * since there is no yield() to do it for us
+	 */
+	sp -= sizeof(&sched_task_entry);
+	*(void**)sp = sched_task_entry;
+
 	/* 0 for ebp, edi, esi, ebx */
 	for (size_t i = 0; i < 4; i++) {
 		sp -= sizeof(uint32_t);

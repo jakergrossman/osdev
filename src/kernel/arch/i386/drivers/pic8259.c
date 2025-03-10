@@ -1,6 +1,8 @@
 #include "asm/atomic.h"
+#include "asm/cpu.h"
 #include "denton/bits/bits.h"
 #include "denton/panic.h"
+#include "denton/sched.h"
 #include <denton/klog.h>
 #include <denton/atomic.h>
 #include <denton/spinlock.h>
@@ -44,6 +46,7 @@ static void pic_slave_set_mask(void)
 static void timer_callback(struct irq_frame* frame, void* privdata)
 {
 	atomic32_inc(&system_tick);
+	cpu_get_local()->reschedule = true;
 }
 
 void pic8259_init(void)

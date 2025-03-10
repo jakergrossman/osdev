@@ -3,6 +3,7 @@
 
 #include <denton/stringify.h>
 #include <asm/gdt.h>
+#include <asm/sched/task.h>
 
 
 struct task;
@@ -15,8 +16,12 @@ struct cpu_info {
 
 	struct task* current;
 
+	struct arch_task_context scheduler;
+
 	/* self reference pointer is handy to stuff into per-cpu GDT variable */
 	struct cpu_info* self;
+
+	bool reschedule;
 };
 
 void cpu_early_init(void);

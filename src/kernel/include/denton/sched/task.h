@@ -2,6 +2,7 @@
 #define __DENTON_SCHED_TASK_H
 
 #include "asm/sched/task.h"
+#include "denton/list.h"
 #include <denton/sched/sched_types.h>
 
 #include <stdint.h>
@@ -24,6 +25,7 @@ enum task_state {
 struct task {
 	pid_t pid;
 	void* stack;
+	struct list_head tasklist;
 
 	struct task* parent;
 	char name[TASK_NAME_SIZE];

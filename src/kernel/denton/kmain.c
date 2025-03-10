@@ -4,6 +4,7 @@
 #include "asm/timer.h"
 #include "denton/heap.h"
 #include "denton/mm/mm_types.h"
+#include "denton/sched.h"
 #include "denton/sched/task.h"
 #include <denton/bits.h>
 #include <denton/tty.h>
@@ -16,12 +17,30 @@
 
 #include <limits.h>
 #include <stdlib.h>
-
+ 
 static int foo(void* foo)
 {
-	klog_info("HI FROM ANOTHER STACK\n");
-	return -1;
+	while (1) {
+		irq_disable();
+		klog_info("HI FROM ANOTHER STACK\n");
+		irq_enable();
+		for (volatile int i = 0; i < 0xFFFFF; i++);
+		pause();
+	}
+	return 0;
 }
+
+static int bar(void* foo)
+{
+	while (1) {
+		irq_disable();
+		klog_info("HI FROM BAR STACK\n");
+		irq_enable();
+		for (volatile int i = 0; i < 0xFFFFF; i++);
+	}
+	return 0;
+}
+
 
 void kmain(void)
 {
@@ -39,14 +58,15 @@ void kmain(void)
 	if (task_init("kernel_init", foo, NULL, task)) {
 		arch_cpu_halt();
 	}
+	
+	sched_init();
 
-	struct task dummy;
-#include "asm/sched/task.h"
-	cpu_get_local()->current = task;
-	arch_task_switch(&dummy.arch_context, &task->arch_context);
+	struct task* bartask = kmalloc(PAGE_SIZE, PGF_KERNEL);
+	task_init("kernel_bar", bar, NULL, bartask);
 
-
-	sti();
+	sched_add(task);
+	sched_add(bartask);
+	sched_start();
 
 	uint32_t next = 0;
 	while (1) {
