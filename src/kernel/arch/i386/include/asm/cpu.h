@@ -13,6 +13,8 @@ struct cpu_info {
 
 	struct gdt_entry gdt_entries[GDT_ENTRIES];
 
+	struct task* current;
+
 	/* self reference pointer is handy to stuff into per-cpu GDT variable */
 	struct cpu_info* self;
 };
@@ -80,6 +82,17 @@ arch_cpu_halt(void)
 		"	cli\n"
 		"1: jmp 1b\n"
 	);
+}
+
+static inline struct cpu_info*
+cpu_get_local(void)
+{
+	void* info;
+	asm volatile (
+		"movl %%gs: 0, %0"
+		: "=r" (info)
+	);
+	return info;
 }
 
 #endif

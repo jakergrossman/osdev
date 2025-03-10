@@ -31,7 +31,8 @@ __gdt_flush(const struct gdt_ptr* ptr)
 		"movw %w0, %%ds\n"
 		"movw %w0, %%es\n"
 		"movw %w0, %%fs\n"
-		: : "r" (GDT_KERNEL_DATA<<3)
+		"movw %w1, %%gs\n"
+		: : "r" (GDT_KERNEL_DATA<<3), "r" (GDT_CPU_VAR<<3)
 		: "memory"
 	);
 }

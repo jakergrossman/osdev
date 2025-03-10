@@ -49,7 +49,7 @@ static __always_inline int32_t
 atomic32_xadd(atomic32_t* v, int32_t count)
 {
 	asm volatile(
-		"lock; addxl %1, %0"
+		"lock; xaddl %1, %0"
 		: "+m" (v->count), "+r" (count)
 	);
 	return count;
@@ -64,7 +64,7 @@ atomic32_sub_return(atomic32_t* v, int32_t count)
 static __always_inline int32_t
 atomic32_add_return(atomic32_t* v, int32_t count)
 {
-	return count + atomic32_xadd(v, count);
+	return atomic32_xadd(v, count);
 }
 
 static __always_inline void

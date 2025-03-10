@@ -44,8 +44,8 @@ enum gdt_selector {
 	GDT_KERNEL_DATA,
 	GDT_USER_CODE,
 	GDT_USER_DATA,
-	GDT_GDT_TSS,
 	GDT_CPU_VAR,
+	GDT_GDT_TSS,
 };
 
 struct gdt_entry {

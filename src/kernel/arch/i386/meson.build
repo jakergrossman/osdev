@@ -11,6 +11,8 @@ kernel_arch_c_sources = files(
   'irq.c',
   'idt.c',
   'irq_handler.S',
+  'task.S',
+  'task.c',
 )
 
 subdir('boot')

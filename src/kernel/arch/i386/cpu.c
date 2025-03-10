@@ -26,10 +26,11 @@ static void cpu_gdt(struct cpu_info * c)
 	// TODO:
 	// c->gdt_entries[GDT_GDT_TSS] = GDT_ENTRY16(GDT_STS_T32A, uint32_t base, uint32_t limit, enum gdt_dpl dpl)
 
-	gdt_flush(c->gdt_entries, 5);
+	gdt_flush(c->gdt_entries, 6);
 }
 
 void cpu_early_init(void)
 {
 	cpu_gdt(&cpu);
+	cpu.self = &cpu;
 }

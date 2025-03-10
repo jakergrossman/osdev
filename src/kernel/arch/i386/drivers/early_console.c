@@ -101,7 +101,7 @@ static void early_console_klog_write(struct klog_sink* sink, const char* buf, si
 static struct klog_sink early_console_klog_sink = {
 	.name = "early_console",
 	.list = LIST_HEAD_INIT(early_console_klog_sink.list),
-	.threshold = KLOG_DEBUG, /* show everything */
+	.threshold = KLOG_TRACE, /* show everything */
 	.write = early_console_klog_write,
 };
 
