@@ -7,7 +7,7 @@ char* strcpy(char* destination, const char* src)
 	return destination;
 }
 
-char* strncpy(size_t maxlen, char* destination, const char* src)
+char* strncpy(char* destination, const char* src, size_t maxlen)
 {
 	const size_t len = strlen(src);
 	maxlen -= 1; // null termination
