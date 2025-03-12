@@ -20,16 +20,26 @@
  
 static int foo(void* foo)
 {
+	static uint64_t thresh = TIMER_TICKS_PER_SECOND;
 	while (1) {
-		klog_info("HI FROM ANOTHER STACK\n");
+		if (cpu_get_local()->current->ran_ticks  >= thresh) {
+			thresh += TIMER_TICKS_PER_SECOND;
+			klog_info("Run for %llu ms\n", 1000 * cpu_get_local()->current->ran_ticks / TIMER_TICKS_PER_SECOND);
+		}
+		sched_sleep_ms(20);
 	}
 	return 0;
 }
 
 static int bar(void* foo)
 {
+	static uint64_t thresh = TIMER_TICKS_PER_SECOND;
 	while (1) {
-		klog_info("HI FROM BAR STACK\n");
+		if (cpu_get_local()->current->ran_ticks  >= thresh) {
+			thresh += TIMER_TICKS_PER_SECOND;
+			klog_info("Run for %llu ms\n", 1000 * cpu_get_local()->current->ran_ticks / TIMER_TICKS_PER_SECOND);
+		}
+		sched_sleep_ms(10);
 	}
 	return 0;
 }

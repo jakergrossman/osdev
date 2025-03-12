@@ -24,6 +24,8 @@ struct cpu_info {
 
 	bool allow_preempt;
 	bool reschedule;
+
+	uint64_t wake_tick;
 };
 
 void cpu_early_init(void);
@@ -114,5 +116,10 @@ cpu_preempt_enable(void)
 	WRITE_ONCE(cpu_get_local()->allow_preempt, true);
 }
 
+static inline void
+cpu_relax(void)
+{
+	asm volatile ( "pause" );
+}
 
 #endif

@@ -10,5 +10,6 @@ void sched_yield(void);             /* yield the current task, and pick a task t
 void sched_reschedule(void);        /* pick a task to run */
 void sched_exit(int status);        /* called by task exit procedure */
 void sched_task_entry(void);
+void sched_sleep_ms(uint32_t ms);
 
 #endif

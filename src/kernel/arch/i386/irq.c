@@ -90,7 +90,7 @@ void irq_global_handler(struct irq_frame* iframe)
 	}
 
 	if (cpu_get_local()->allow_preempt && cpu_get_local()->reschedule) {
-		sched_yield();
 		cpu_get_local()->reschedule = false;
+		sched_yield();
 	}
 }

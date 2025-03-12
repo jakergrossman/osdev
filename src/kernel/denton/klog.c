@@ -68,7 +68,8 @@ void __klog(const char* funcname, enum klog_level level, const char* fmt, ...)
 	size_t rest_len = vsnprintf(buf+prefix_len, sizeof(buf)-prefix_len, fmt, args);
 	va_end(args);
 
-	uint32_t flags = irq_save();
+	irq_flags_t flags;
+	spin_lock_irqsave(&klog_output_lock, &flags);
 
 	struct klog_sink* sink = NULL;
 	struct klog_sink* tmp = NULL;
@@ -80,7 +81,7 @@ void __klog(const char* funcname, enum klog_level level, const char* fmt, ...)
 		sink->write(sink, buf, prefix_len + rest_len);
 	}
 
-	irq_restore(flags);
+	spin_unlock_restore(&klog_output_lock, flags);
 }
 
 void klog_sink_register(struct klog_sink* sink)

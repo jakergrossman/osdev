@@ -36,6 +36,10 @@ struct task {
 	struct task* parent;
 	char name[TASK_NAME_SIZE];
 
+	uint64_t last_ran_ticks;
+	uint64_t ran_ticks;
+	uint64_t wake_tick;
+
 };
 
 int           task_init(const char* name, taskfn_t fn, void* token, struct task* outp);
