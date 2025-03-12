@@ -111,7 +111,7 @@ list_placed_in_list(struct list_head * entry)
 		 iter = list_entry(iter->member.next, typeof(*iter), member))
 
 
-#define list_for_each_entry_safe(head, pos, nxt, member) \
+#define list_for_each_entry_safe(pos, head, nxt, member) \
 	for (pos = list_first_entry(head, typeof(*pos), member), \
 			nxt = list_next_entry(pos, member); \
 		 &pos->member != (head); \

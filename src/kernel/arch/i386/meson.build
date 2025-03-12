@@ -13,6 +13,7 @@ kernel_arch_c_sources = files(
   'irq_handler.S',
   'task.S',
   'task.c',
+  'sync/tspinlock.c',
 )
 
 subdir('boot')

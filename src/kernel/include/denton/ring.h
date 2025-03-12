@@ -2,7 +2,7 @@
 #define __DENTON_RING_h
 
 #include "denton/compiler.h"
-#include <denton/spinlock.h>
+#include "denton/spinlock.h"
 #include <denton/stddef.h>
 
 #include <stddef.h>

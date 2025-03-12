@@ -33,4 +33,5 @@ void cpu_early_init(void)
 {
 	cpu_gdt(&cpu);
 	cpu.self = &cpu;
+	cpu.allow_preempt = true;
 }

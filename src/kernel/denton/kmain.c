@@ -21,11 +21,7 @@
 static int foo(void* foo)
 {
 	while (1) {
-		irq_disable();
 		klog_info("HI FROM ANOTHER STACK\n");
-		irq_enable();
-		for (volatile int i = 0; i < 0xFFFFF; i++);
-		pause();
 	}
 	return 0;
 }
@@ -33,10 +29,7 @@ static int foo(void* foo)
 static int bar(void* foo)
 {
 	while (1) {
-		irq_disable();
 		klog_info("HI FROM BAR STACK\n");
-		irq_enable();
-		for (volatile int i = 0; i < 0xFFFFF; i++);
 	}
 	return 0;
 }
@@ -66,6 +59,8 @@ void kmain(void)
 
 	sched_add(task);
 	sched_add(bartask);
+	irq_enable();
+	while (1);
 	sched_start();
 
 	uint32_t next = 0;

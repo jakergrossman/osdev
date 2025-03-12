@@ -2,6 +2,8 @@
 #define __DENTON_ARCH_I386_ASM_IRQ_H
 
 #include "asm/instr.h"
+#include "denton/bits/bits.h"
+#include "sys/compiler.h"
 #include <denton/atomic.h>
 #include <denton/list.h>
 #include <denton/types.h>
@@ -56,18 +58,30 @@ int irq_register_handler(
 	void* privdata
 );
 
-typedef int irq_flags_t;
+typedef unsigned long irq_flags_t;
 #define irq_disable() cli()
 #define irq_enable() sti()
 
-static inline __must_check uint32_t
+static __always_inline __must_check uint32_t
 irq_save(void)
 {
-	return eflags_read();
+	uint32_t flags = eflags_read();
+	irq_disable();
+	return flags;
 }
 
-#define irq_save() eflags_read()
-#define irq_restore(flags) eflags_write(flags)
+static __always_inline int arch_irqs_disabled_flags(uint32_t flags)
+{
+	return !(flags & BIT(9)); // FIXME: magic number
+}
+
+static __always_inline void
+irq_restore(uint32_t flags)
+{
+	if (!arch_irqs_disabled_flags(flags)) {
+		irq_enable();
+	}
+}
 
 #endif
 

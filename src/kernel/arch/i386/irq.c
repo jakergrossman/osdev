@@ -89,9 +89,7 @@ void irq_global_handler(struct irq_frame* iframe)
 		pic8259_enable_irq(pic8259_irq);
 	}
 
-	cli();
-
-	if (cpu_get_local()->reschedule) {
+	if (cpu_get_local()->allow_preempt && cpu_get_local()->reschedule) {
 		sched_yield();
 		cpu_get_local()->reschedule = false;
 	}

@@ -1,6 +1,7 @@
 #ifndef __DENTON_ARCH_I386_ASM_CPU_H
 #define __DENTON_ARCH_I386_ASM_CPU_H
 
+#include "asm/rwonce.h"
 #include <denton/stringify.h>
 #include <asm/gdt.h>
 #include <asm/sched/task.h>
@@ -21,6 +22,7 @@ struct cpu_info {
 	/* self reference pointer is handy to stuff into per-cpu GDT variable */
 	struct cpu_info* self;
 
+	bool allow_preempt;
 	bool reschedule;
 };
 
@@ -99,5 +101,18 @@ cpu_get_local(void)
 	);
 	return info;
 }
+
+static inline void
+cpu_preempt_disable(void)
+{
+	WRITE_ONCE(cpu_get_local()->allow_preempt, false);
+}
+
+static inline void
+cpu_preempt_enable(void)
+{
+	WRITE_ONCE(cpu_get_local()->allow_preempt, true);
+}
+
 
 #endif

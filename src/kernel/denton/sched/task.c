@@ -34,11 +34,13 @@ int task_init(const char* name, taskfn_t fn, void* token, struct task* outp)
 	}
 
 	outp->stack = stack;
-	arch_task_setup_stack(outp, fn, token);
+	arch_task_init(outp);
 
 	strncpy(&outp->name[0], name, sizeof(outp->name));
 
 	outp->pid = task_next_pid();
+	outp->state = TASK_ST_NEW;
+	outp->fn = fn;
 
 	return 0;
 }

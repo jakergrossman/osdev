@@ -113,21 +113,23 @@ __bma_page_alloc(struct bitmap_ally* ally, unsigned long pos, int count, unsigne
 struct page*
 bma_page_alloc(struct bitmap_ally* ally, int count, unsigned int flags)
 {
-	using_spin_lock(&ally->lock) {
-		long base = bma_alloc_consecutive(ally->free_bitmask, ally->num_bits, count);
-		if (base >= 0) {
-			return __bma_page_alloc(ally, base, count, flags);
-		}
-	}
+	struct page* base = NULL;
 
-	return NULL;
+	spin_lock(&ally->lock);
+	long base_frame = bma_alloc_consecutive(ally->free_bitmask, ally->num_bits, count);
+	if (base_frame >= 0) {
+		base =  __bma_page_alloc(ally, base_frame, count, flags);
+	}
+	spin_unlock(&ally->lock);
+
+	return base;
 }
 
 void bma_page_free(struct bitmap_ally* ally, struct page* start, size_t count)
 {
-	using_spin_lock(&ally->lock) {
-		bma_free(ally->free_bitmask, start->page_number, count);
-	}
+	spin_lock(&ally->lock);
+	bma_free(ally->free_bitmask, start->page_number, count);
+	spin_unlock(&ally->lock);
 }
 
 static struct page* bma_pga_alloc(void* ctx, unsigned int order, pgf_t flags)

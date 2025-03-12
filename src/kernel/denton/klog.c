@@ -1,3 +1,4 @@
+#include "asm/irq.h"
 #include <denton/klog.h>
 
 #include <denton/compiler.h>
@@ -67,33 +68,35 @@ void __klog(const char* funcname, enum klog_level level, const char* fmt, ...)
 	size_t rest_len = vsnprintf(buf+prefix_len, sizeof(buf)-prefix_len, fmt, args);
 	va_end(args);
 
-	using_spin_lock(&klog_output_lock) {
-		struct klog_sink* sink = NULL;
-		struct klog_sink* tmp = NULL;
-		list_for_each_entry_safe(&klog_outputs, sink, tmp, list) {
-			if (level > sink->threshold) {
-				continue;
-			}
+	uint32_t flags = irq_save();
 
-			sink->write(sink, buf, prefix_len + rest_len);
+	struct klog_sink* sink = NULL;
+	struct klog_sink* tmp = NULL;
+	list_for_each_entry_safe(sink, &klog_outputs, tmp, list) {
+		if (level > sink->threshold) {
+			continue;
 		}
+
+		sink->write(sink, buf, prefix_len + rest_len);
 	}
+
+	irq_restore(flags);
 }
 
 void klog_sink_register(struct klog_sink* sink)
 {
-	using_spin_lock(&klog_output_lock) {
-		if (!list_placed_in_list(&sink->list)) {
-			list_add_tail(&sink->list, &klog_outputs);
-		}
+	spin_lock(&klog_output_lock);
+	if (!list_placed_in_list(&sink->list)) {
+		list_add_tail(&sink->list, &klog_outputs);
 	}
+	spin_unlock(&klog_output_lock);
 }
 
 void klog_sink_deregister(struct klog_sink* sink)
 {
-	using_spin_lock(&klog_output_lock) {
-		list_del(&sink->list);
-	}
+	spin_lock(&klog_output_lock);
+	list_del(&sink->list);
+	spin_unlock(&klog_output_lock);
 }
 
 int klog_init(void)
