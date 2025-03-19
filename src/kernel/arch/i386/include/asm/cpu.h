@@ -1,11 +1,13 @@
 #ifndef __DENTON_ARCH_I386_ASM_CPU_H
 #define __DENTON_ARCH_I386_ASM_CPU_H
 
-#include "asm/rwonce.h"
 #include <denton/stringify.h>
+
 #include <asm/gdt.h>
 #include <asm/sched/task.h>
+#include <asm/instr.h>
 
+#include <asm-generic/cpu.h>
 
 struct task;
 
@@ -28,8 +30,6 @@ struct cpu_info {
 	uint64_t wake_tick;
 };
 
-void cpu_early_init(void);
-
 /*
  * Volatile isn't enough to prevent the compiler from reordering the
  * read/write functions for the control registers and messing everything up.
@@ -37,8 +37,7 @@ void cpu_early_init(void);
  * all loads stores around it, which can hurt performance. Solution is to
  * use a variable and mimic reads and writes to it to enforce serialization
  */
-#include <stdint.h>
-extern unsigned long __force_order;
+#define __FORCE_ORDER "m"(*(unsigned int*)0x1000UL)
 
 /** declare an ordered read function on a control register using volatile asm */
 #define __cpu_read_crN_decl(n) \
@@ -47,7 +46,7 @@ static inline uint32_t cpu_read_cr##n (void) \
 	uint32_t val = 0; \
 	asm volatile ( \
 		"mov %%cr" __stringify(n) ", %0" \
-		: "=r" (val), "=m" (__force_order) \
+		: "=r" (val) : __FORCE_ORDER \
 	); \
 	return val; \
 } 
@@ -59,7 +58,7 @@ static inline void cpu_write_cr##n (uint32_t val) \
 	asm volatile ( \
 		"mov %0, %%cr" __stringify(n) \
 		: \
-		: "r" (val), "m" (__force_order) \
+		: "r" (val) \
 		: "memory" \
 	); \
 } \
@@ -83,43 +82,5 @@ __cpu_read_crN_decl(5);
 __cpu_read_crN_decl(6);
 __cpu_read_crN_decl(7);
 __cpu_read_crN_decl(8);
-
-static inline void
-arch_cpu_halt(void)
-{
-	asm volatile (
-		"	cli\n"
-		"1: jmp 1b\n"
-	);
-}
-
-static inline struct cpu_info*
-cpu_get_local(void)
-{
-	void* info;
-	asm volatile (
-		"movl %%gs: 0, %0"
-		: "=r" (info)
-	);
-	return info;
-}
-
-static inline void
-cpu_preempt_disable(void)
-{
-	WRITE_ONCE(cpu_get_local()->allow_preempt, false);
-}
-
-static inline void
-cpu_preempt_enable(void)
-{
-	WRITE_ONCE(cpu_get_local()->allow_preempt, true);
-}
-
-static inline void
-cpu_relax(void)
-{
-	asm volatile ( "pause" );
-}
 
 #endif

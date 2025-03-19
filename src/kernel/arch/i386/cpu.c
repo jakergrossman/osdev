@@ -1,3 +1,5 @@
+#include <asm-generic/rwonce.h>
+
 #include <asm/cpu.h>
 #include <asm/gdt.h>
 
@@ -34,4 +36,44 @@ void cpu_early_init(void)
 	cpu_gdt(&cpu);
 	cpu.self = &cpu;
 	cpu.allow_preempt = true;
+}
+
+void cpu_halt(void)
+{
+	asm volatile ( "hlt" ::: "memory" );
+}
+
+void cpu_stop(void)
+{
+	asm volatile (
+		"1:	cli\n"
+		"	hlt\n"
+		"	jmp 1b\n"
+		::: "memory"
+	);
+}
+
+struct cpu_info* cpu_get_local(void)
+{
+	void* info;
+	asm volatile (
+		"movl %%gs: 0, %0"
+		: "=r" (info)
+	);
+	return info;
+}
+
+void cpu_preempt_disable(void)
+{
+	WRITE_ONCE(cpu_get_local()->allow_preempt, false);
+}
+
+void cpu_preempt_enable(void)
+{
+	WRITE_ONCE(cpu_get_local()->allow_preempt, true);
+}
+
+void cpu_relax(void)
+{
+	asm volatile ( "pause" );
 }

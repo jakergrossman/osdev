@@ -1,5 +1,4 @@
 #include "asm/cpu.h"
-#include "asm/instr.h"
 #include "asm/paging.h"
 #include "asm/timer.h"
 #include "denton/heap.h"
@@ -20,26 +19,26 @@
  
 static int foo(void* foo)
 {
-	static uint64_t thresh = TIMER_TICKS_PER_SECOND;
+	static uint64_t thresh = 1;
 	while (1) {
 		if (cpu_get_local()->current->ran_ticks  >= thresh) {
 			thresh += TIMER_TICKS_PER_SECOND;
 			klog_info("Run for %llu ms\n", 1000 * cpu_get_local()->current->ran_ticks / TIMER_TICKS_PER_SECOND);
 		}
-		sched_sleep_ms(20);
+		sched_sleep_ms(8);
 	}
 	return 0;
 }
 
 static int bar(void* foo)
 {
-	static uint64_t thresh = TIMER_TICKS_PER_SECOND;
+	static uint64_t thresh = 1;
 	while (1) {
 		if (cpu_get_local()->current->ran_ticks  >= thresh) {
 			thresh += TIMER_TICKS_PER_SECOND;
 			klog_info("Run for %llu ms\n", 1000 * cpu_get_local()->current->ran_ticks / TIMER_TICKS_PER_SECOND);
 		}
-		sched_sleep_ms(10);
+		sched_sleep_ms(4);
 	}
 	return 0;
 }
@@ -54,12 +53,12 @@ void kmain(void)
 
 	struct task* task = kmalloc(PAGE_SIZE, PGF_KERNEL);
 	if (!task) {
-		arch_cpu_halt();
+		cpu_halt();
 		//panic();
 	}
 
 	if (task_init("kernel_init", foo, NULL, task)) {
-		arch_cpu_halt();
+		cpu_halt();
 	}
 	
 	sched_init();

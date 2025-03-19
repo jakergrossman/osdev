@@ -41,7 +41,8 @@ int __sched_reschedule(struct scheduler* sched)
 {
 	if (sched->running) {
 		uint64_t now = timer_get_ticks();
-		__sched.running->ran_ticks += now - __sched.running->last_ran_ticks + 1;
+		uint64_t delta = now - __sched.running->last_ran_ticks;
+		__sched.running->ran_ticks += delta ? delta : 1;
 		sched->running->last_ran_ticks = now;
 		list_add_tail(&sched->running->tasklist, &sched->ready_list);
 		sched->running = NULL;
@@ -98,11 +99,15 @@ void sched_exit(int status)
 
 static int sched_idle(void* token)
 {
-	static uint64_t thresh = TIMER_TICKS_PER_SECOND;
+	static uint64_t thresh = TIMER_TICKS_PER_SECOND*5;
 	while (1) {
+		uint64_t now = timer_get_ms();
 		if (cpu_get_local()->current->ran_ticks  >= thresh) {
-			thresh += TIMER_TICKS_PER_SECOND;
-			klog_info("Run for %llu ticks\n", cpu_get_local()->current->ran_ticks);
+			thresh += TIMER_TICKS_PER_SECOND*5;
+			klog_info("Run for %llu ms, uptime %lld.%03lldms\n",
+					1000 * cpu_get_local()->current->ran_ticks / TIMER_TICKS_PER_SECOND,
+					now / 1000,
+					now % 1000);
 		}
 		hlt();
 	}
