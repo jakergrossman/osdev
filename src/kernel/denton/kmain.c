@@ -69,19 +69,6 @@ void kmain(void)
 
 	sched_add(task);
 	sched_add(bartask);
-	irq_enable();
-	while (1);
+
 	sched_start();
-
-	uint32_t next = 0;
-	while (1) {
-		uint32_t ms = timer_get_ms();
-		if (ms >= next)
-		{
-			klog_error("%ld\n", (long)ms);
-			next = ms + 250;
-		}
-	}
-
-	klog_error("aaaand its dead\n");
 }

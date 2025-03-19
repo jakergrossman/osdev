@@ -165,3 +165,12 @@ void sched_sleep_ms(uint32_t ms)
 
 	sched_yield();
 }
+
+void sched_start(void)
+{
+	irq_enable();
+
+	while (1) {
+		cpu_halt();
+	}
+}
