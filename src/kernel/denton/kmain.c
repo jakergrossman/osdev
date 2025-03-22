@@ -5,6 +5,7 @@
 #include "denton/mm/mm_types.h"
 #include "denton/sched.h"
 #include "denton/sched/task.h"
+#include "denton/sync/sem.h"
 #include <denton/bits.h>
 #include <denton/tty.h>
 #include <denton/klog.h>
@@ -15,32 +16,51 @@
 #include <asm/irq.h>
 
 #include <limits.h>
+#include <stdatomic.h>
+#include <stdint.h>
 #include <stdlib.h>
- 
-static int foo(void* foo)
-{
-	static uint64_t thresh = 1;
-	while (1) {
-		if (cpu_get_local()->current->ran_ticks  >= thresh) {
-			thresh += TIMER_TICKS_PER_SECOND;
-			klog_info("Run for %llu ms\n", 1000 * cpu_get_local()->current->ran_ticks / TIMER_TICKS_PER_SECOND);
-		}
-		sched_sleep_ms(8);
-	}
-	return 0;
+
+static SEM_DECL(sem, 0);
+
+extern void msleep(unsigned long millis);
+extern void tsleep(unsigned long ticks)
+{;
+	unsigned long now = timer_get_ticks();
+	unsigned long then = now + ticks;
+
+	struct task* current = cpu_get_local()->current;
+	current->wake_tick = then;
+	current->state = TASK_ST_SLEEPING;
+
+	// sched_yield();
 }
 
-static int bar(void* foo)
+_Atomic(unsigned long) __cont = 0;
+
+static int producer_task(void * intervalp)
 {
-	static uint64_t thresh = 1;
-	while (1) {
-		if (cpu_get_local()->current->ran_ticks  >= thresh) {
-			thresh += TIMER_TICKS_PER_SECOND;
-			klog_info("Run for %llu ms\n", 1000 * cpu_get_local()->current->ran_ticks / TIMER_TICKS_PER_SECOND);
-		}
-		sched_sleep_ms(4);
+	klog_info("starting\n");
+	return -1;
+	
+	for (size_t i; i < 500; i++) {
+		// uintptr_t step = (uintptr_t)intervalp;
+		// tsleep(step);
+		atomic_fetch_add(&__cont, 1);
+		// sem_up(&sem);
+		klog_info("up %d\n", (uintptr_t)intervalp);
 	}
-	return 0;
+	return (int)intervalp;
+}
+
+static int consumer_task(void * descp)
+{
+	klog_info("starting %s\n", (char*)descp);
+
+	for (;;) {
+		// sem_down(&sem);
+		unsigned long val = atomic_load(&__cont);
+		klog_info("%s: %ld\n", (char*)descp, val);
+	}
 }
 
 
@@ -57,17 +77,23 @@ void kmain(void)
 		//panic();
 	}
 
-	if (task_init("kernel_init", foo, NULL, task)) {
-		cpu_halt();
-	}
-	
 	sched_init();
 
-	struct task* bartask = kmalloc(PAGE_SIZE, PGF_KERNEL);
-	task_init("kernel_bar", bar, NULL, bartask);
+	struct task* producer = kmalloc(PAGE_SIZE, PGF_KERNEL);
+	task_init("p1", producer_task, (void*)(200), producer);
+	struct task* p2 = kmalloc(PAGE_SIZE, PGF_KERNEL);
+	task_init("p2", producer_task, (void*)(4), p2);
+	struct task* c1 = kmalloc(PAGE_SIZE, PGF_KERNEL);
+	task_init("kernel_bar", consumer_task, "c1", c1);
+	struct task* c2 = kmalloc(PAGE_SIZE, PGF_KERNEL);
+	task_init("kernel_bar", consumer_task, "c2", c2);
+	struct task* c3 = kmalloc(PAGE_SIZE, PGF_KERNEL);
+	task_init("kernel_bar", consumer_task, "c3", c3);
 
-	sched_add(task);
-	sched_add(bartask);
+	// sched_add(c1);
+	// sched_add(c2);
+	sched_add(producer);
+	sched_add(p2);
 
 	sched_start();
 }

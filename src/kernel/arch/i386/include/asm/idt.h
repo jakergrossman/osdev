@@ -3,7 +3,6 @@
 
 /** Interrupt Descriptor Table (IDT) Handling Routines */
 
-#include "denton/atomic.h"
 #include "denton/list.h"
 #include <denton/compiler.h>
 
@@ -38,7 +37,7 @@ struct idt_entry {
 } __packed;
 
 struct idt_id {
-	atomic_t count;
+	_Atomic(unsigned long) count;
 	uint32_t flags;
 	struct list_head list;
 };

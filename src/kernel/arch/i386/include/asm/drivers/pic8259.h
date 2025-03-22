@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #define PIC8259_IRQ0			0x20
-#define PIC8259_TICKS_PER_SEC	250
+#define PIC8259_TICKS_PER_SEC	100
 
 void pic8259_init(void);
 void pic8259_timer_init(void);

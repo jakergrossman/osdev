@@ -1,3 +1,4 @@
 kernel_c_sched_sources = files(
-  'task.c'
+  'task.c',
+  'core.c',
 )

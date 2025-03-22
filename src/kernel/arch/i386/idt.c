@@ -2,7 +2,6 @@
 #include "denton/klog.h"
 #include "denton/tty.h"
 #include <denton/compiler.h>
-#include <denton/atomic.h>
 #include <denton/list.h>
 #include <denton/types.h>
 
@@ -48,16 +47,16 @@ static const char *cpu_exception_name[32] = {
 static void
 unhandled_cpu_exception(struct irq_frame* frame, void* privdata)
 {
-	printf( "[ 0.000000 ] ===== Exception: %s(%d)!!! =====\n",
+	klog_error( "[ 0.000000 ] ===== Exception: %s(%d)!!! =====\n",
 			cpu_exception_name[frame->intno], frame->intno);
-	printf( "[ 0.000000 ] ERR: 0x%08X   EIP: V@%p\n", frame->err, (void *)frame->eip);
-	printf( "[ 0.000000 ] EAX: 0x%08X   EBX: 0x%08X\n", frame->eax, frame->ebx);
-	printf( "[ 0.000000 ] ECX: 0x%08X   EDX: 0x%08X\n", frame->ecx, frame->edx);
-	printf( "[ 0.000000 ] ESI: 0x%08X   EDI: 0x%08X\n", frame->esi, frame->edi);
-	printf( "[ 0.000000 ] ESP: 0x%08X   EBP: 0x%08X\n", frame->esp, frame->ebp);
-	printf( "[ 0.000000 ] CS:  0x%04X       SS:  0x%04X\n", frame->cs, frame->ss);
-	printf( "[ 0.000000 ] DS:  0x%04X       ES:  0x%04X\n", frame->ds, frame->es);
-	printf( "[ 0.000000 ] FS:  0x%04X       GS:  0x%04X\n", frame->fs, frame->gs);
+	klog_error( "[ 0.000000 ] ERR: 0x%08X   EIP: V@%p\n", frame->err, (void *)frame->eip);
+	klog_error( "[ 0.000000 ] EAX: 0x%08X   EBX: 0x%08X\n", frame->eax, frame->ebx);
+	klog_error( "[ 0.000000 ] ECX: 0x%08X   EDX: 0x%08X\n", frame->ecx, frame->edx);
+	klog_error( "[ 0.000000 ] ESI: 0x%08X   EDI: 0x%08X\n", frame->esi, frame->edi);
+	klog_error( "[ 0.000000 ] ESP: 0x%08X   EBP: 0x%08X\n", frame->esp, frame->ebp);
+	klog_error( "[ 0.000000 ] CS:  0x%04X       SS:  0x%04X\n", frame->cs, frame->ss);
+	klog_error( "[ 0.000000 ] DS:  0x%04X       ES:  0x%04X\n", frame->ds, frame->es);
+	klog_error( "[ 0.000000 ] FS:  0x%04X       GS:  0x%04X\n", frame->fs, frame->gs);
 
 	terminal_flush();
 

@@ -4,7 +4,6 @@ kernel_inc_dirs = include_directories(
 
 install_headers(
   'denton/args.h',
-  'denton/atomic.h',
   'denton/bits.h',
   'denton/bug.h',
   'denton/compiler.h',

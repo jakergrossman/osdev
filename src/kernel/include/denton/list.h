@@ -3,7 +3,9 @@
 
 #include "denton/compiler.h"
 #include <denton/container_of.h>
+#include <asm-generic/rwonce.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 struct list_head {
 	struct list_head* prev;
@@ -50,13 +52,16 @@ static inline void
 __list_del(struct list_head * prev, struct list_head * next)
 {
 	next->prev = prev;
-	prev->next = next;
+	WRITE_ONCE(prev->next, next);
 }
 
-static inline void
+static inline struct list_head* 
 list_del(struct list_head * entry)
 {
 	__list_del(entry->prev, entry->next);
+	entry->next = entry;
+	entry->prev = entry;
+	return entry;
 }
 
 static inline bool
@@ -70,9 +75,9 @@ list_rotate(struct list_head * entry)
 {
 	struct list_head* head = entry;
 	struct list_head* prev = head->prev;
-	list_del(entry);
-	list_add_tail(head, prev);
+	list_add_tail(list_del(entry), prev);
 }
+
 
 /* return whether @entry is placed in a list */
 static inline bool
@@ -110,11 +115,16 @@ list_placed_in_list(struct list_head * entry)
 		 &iter->member != (head); \
 		 iter = list_entry(iter->member.next, typeof(*iter), member))
 
-
 #define list_for_each_entry_safe(pos, head, nxt, member) \
 	for (pos = list_first_entry(head, typeof(*pos), member), \
 			nxt = list_next_entry(pos, member); \
 		 &pos->member != (head); \
 		 pos = nxt, nxt = list_next_entry(nxt, member))
+
+#define list_pop(ptr, type, member) \
+	(list_empty(ptr) ? NULL : list_entry(list_del((ptr)->next, type, member)
+
+#define list_pop_tail(ptr, type, member) \
+	(list_empty(ptr) ? NULL : list_entry(list_del((ptr)->prev, type, member)
 
 #endif

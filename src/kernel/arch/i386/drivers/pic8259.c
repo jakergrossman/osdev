@@ -4,7 +4,6 @@
 #include "denton/panic.h"
 #include "denton/sched.h"
 #include <denton/klog.h>
-#include <denton/atomic.h>
 #include <denton/spinlock.h>
 #include <asm/drivers/pic8259.h>
 

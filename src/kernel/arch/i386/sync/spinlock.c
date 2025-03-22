@@ -57,3 +57,15 @@ void spin_unlock_restore(spinlock_t* lock, irq_flags_t flags)
 	spin_unlock(lock);
 	irq_restore(flags);
 }
+
+void spin_lock_irq(spinlock_t* lock)
+{
+	spin_unlock(lock);
+	irq_disable();
+}
+
+void spin_unlock_irq(spinlock_t* lock)
+{
+	spin_unlock(lock);
+	irq_enable();
+}

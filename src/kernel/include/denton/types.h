@@ -4,7 +4,6 @@
 #include <asm/types.h>
 #include <denton/list.h>
 #include <denton/math.h>
-#include <denton/atomic.h>
 
 #include <stdbool.h>
 

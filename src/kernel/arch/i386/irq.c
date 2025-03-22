@@ -4,7 +4,6 @@
 #include <denton/klog.h>
 #include <denton/kstring.h>
 #include <denton/math.h>
-#include <denton/atomic.h>
 #include <denton/tty.h>
 #include <denton/types.h>
 #include <denton/errno.h>
@@ -17,6 +16,7 @@
 
 #include <asm/drivers/pic8259.h>
 
+#include <stdatomic.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <limits.h>
@@ -71,7 +71,7 @@ void irq_global_handler(struct irq_frame* iframe)
 	struct idt_id* ident = idt_get_id(iframe->intno);
 	int pic8259_irq = -1;
 
-	atomic_inc(&ident->count);
+	atomic_fetch_add(&ident->count, 1);
 
 	if (kinrange(iframe->intno, PIC8259_IRQ0, PIC8259_IRQ0+16)) {
 		pic8259_irq = iframe->intno - PIC8259_IRQ0;
@@ -91,6 +91,6 @@ void irq_global_handler(struct irq_frame* iframe)
 
 	if (cpu_get_local()->allow_preempt && cpu_get_local()->reschedule) {
 		cpu_get_local()->reschedule = false;
-		sched_yield();
+		sched_schedule();
 	}
 }

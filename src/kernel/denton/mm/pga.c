@@ -3,7 +3,6 @@
 #include "denton/mm/bootmem.h"
 #include "denton/types.h"
 #include <denton/compiler.h>
-#include <denton/atomic.h>
 #include <denton/list.h>
 #include <denton/mm/pga.h>
 

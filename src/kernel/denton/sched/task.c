@@ -1,5 +1,6 @@
-#include "denton/atomic.h"
+#include "asm-generic/rwonce.h"
 #include "denton/heap.h"
+#include "denton/sched.h"
 #include <denton/mm/mm_types.h>
 #include <denton/sched/task.h>
 #include <denton/errno.h>
@@ -7,13 +8,14 @@
 #include <asm/sched/task.h>
 #include <asm/paging.h>
 
+#include <stdatomic.h>
 #include <string.h>
 
-static atomic_t __next_task_pid;
+static _Atomic(unsigned long) __next_task_pid;
 
 static uint32_t task_next_pid(void)
 {
-	return atomic_inc_return(&__next_task_pid);
+	return atomic_fetch_add(&__next_task_pid, 1);
 }
 
 /**
@@ -34,6 +36,7 @@ int task_init(const char* name, taskfn_t fn, void* token, struct task* outp)
 	}
 
 	outp->stack = stack;
+	outp->privdata = token;
 	arch_task_init(outp);
 
 	strncpy(&outp->name[0], name, sizeof(outp->name));
@@ -43,6 +46,11 @@ int task_init(const char* name, taskfn_t fn, void* token, struct task* outp)
 	outp->fn = fn;
 
 	return 0;
+}
+
+void task_set_state(struct task* task, enum task_state state)
+{
+	WRITE_ONCE(task->state, state);
 }
 
 /**
@@ -59,3 +67,4 @@ int task_init_user(const char* name, taskfn_t fn, struct task* outp)
 {
 	return -ENOSYS;
 }
+

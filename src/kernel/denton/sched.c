@@ -1,3 +1,4 @@
+#include "asm-generic/cpu.h"
 #include "asm/instr.h"
 #include "asm/irq.h"
 #include "asm/sched/task.h"
@@ -10,6 +11,7 @@
 #include <denton/types.h>
 #include <denton/spinlock.h>
 #include <denton/errno.h>
+#include <denton/math.h>
 
 #include <asm/cpu.h>
 
@@ -17,75 +19,190 @@
 
 struct scheduler {
 	spinlock_t lock;
-	struct list_head ready_list;
-	struct list_head blocked_list;
+	struct {
+		struct list_head ready;
+		struct list_head sleeping;
+		struct list_head blocked;
+	} tasks;
 	struct task* running;
 } __sched = {
 	.lock = SPINLOCK_INIT(0),
-	.ready_list = LIST_HEAD_INIT(__sched.ready_list),
-	.blocked_list = LIST_HEAD_INIT(__sched.blocked_list),
+	.tasks = {
+		.ready = LIST_HEAD_INIT(__sched.tasks.ready),
+		.blocked = LIST_HEAD_INIT(__sched.tasks.blocked),
+	},
 	.running = NULL,
 };
 
-void __sched_add(struct scheduler* sched, struct task* ktask)
+enum sched_type {
+	SCHED_IDLE = -1,
+	SCHED_NONE,
+	SCHED_PREEMPT,
+	SCHED_BLOCK,
+};
+
+void __sched_set_state(enum task_state state)
 {
-	spin_lock(&sched->lock);
-
-	list_add_tail(&ktask->tasklist, &sched->ready_list);
-
-	spin_unlock(&sched->lock);
+	WRITE_ONCE(cpu_get_local()->current->state, state);
 }
 
-/** select a new "running" task */
-int __sched_reschedule(struct scheduler* sched)
+static void __sched_pick_next_task(void)
 {
-	if (sched->running) {
-		uint64_t now = timer_get_ticks();
-		uint64_t delta = now - __sched.running->last_ran_ticks;
-		__sched.running->ran_ticks += delta ? delta : 1;
-		sched->running->last_ran_ticks = now;
-		list_add_tail(&sched->running->tasklist, &sched->ready_list);
-		sched->running = NULL;
-	}
-
-	if (list_empty(&sched->ready_list)) {
-		return -ENOENT;
-	}
-
 	struct task* iter = NULL;
 	struct task* next = NULL;
-	list_for_each_entry_safe(iter, &sched->ready_list, next, tasklist) {
+	list_for_each_entry_safe(iter, &__sched.tasks.ready, next, tasklist) {
 		list_del(&iter->tasklist);
 		switch (iter->state) {
 			case TASK_ST_RUNNING:
 				break;
 			case TASK_ST_NEW:
-				sched->running = iter;
-				cpu_get_local()->current = iter;
-				iter->state = TASK_ST_RUNNING;
-				arch_task_entry(iter);
+				__sched.running = iter;
 				break;
-			case TASK_ST_SLEEPING:
-				if (timer_get_ticks() > iter->wake_tick) {
-					iter->state = TASK_ST_RUNNING;
-				} else {
-					list_add_tail(&iter->tasklist, &sched->ready_list);
-				}
-				break;
+			case TASK_ST_BLOCKED:
 			default:
-				list_add_tail(&iter->tasklist, &sched->ready_list);
+				list_add_tail(&iter->tasklist, &__sched.tasks.ready);
 				break;
 		}
 
 		if (iter->state == TASK_ST_RUNNING) {
-			sched->running = iter;
-			sched->running->last_ran_ticks = timer_get_ticks();
+			__sched.running = iter;
+			__sched.running->last_ran_ticks = timer_get_ticks();
 			cpu_get_local()->current = iter;
 			break;
 		}
 	}
+}
+
+static void __sched_switch(struct task * prev, struct task * next)
+{
+	if (prev) {
+		arch_task_context_save(&prev->arch_context);
+	}
+
+	cpu_get_local()->current = next;
+	cpu_preempt_enable();
+
+	arch_task_context_restore(&next->arch_context);
+}
+
+/**
+ * preconditions:
+ * - must be called with preemption disabled
+ * - current task state is set to incoming state
+ */
+static void __schedule(void)
+{
+	struct task* prev = cpu_get_local()->current;
+
+	struct task* iter = NULL;
+	struct task* next = NULL;
+	list_for_each_entry_safe(iter, &__sched.tasks.ready, next, tasklist) {
+		list_rotate(&__sched.tasks.ready);
+		switch (iter->state) {
+			case TASK_ST_RUNNING:
+				break;
+			case TASK_ST_NEW:
+				__sched.running = iter;
+				cpu_get_local()->current = iter;
+				__sched_set_state(TASK_ST_RUNNING);
+				cpu_preempt_enable();
+				arch_task_entry(iter);
+				break;
+			default:
+				klog_error("no task?\n");
+				break;
+		}
+
+		__sched.running = iter;
+		__sched.running->last_ran_ticks = timer_get_ticks();
+		break;
+	}
+
+	__sched_switch(prev, __sched.running);
+}
+
+static void __sched_yield(struct list_head * to_list);
+void __sched_move_task(struct scheduler * sched, struct task * task, struct list_head * list);
+
+void __sched_add(struct scheduler* sched, struct task* ktask)
+{
+	spin_lock(&sched->lock);
+
+	list_add_tail(&ktask->tasklist, &sched->tasks.ready);
+
+	spin_unlock(&sched->lock);
+}
+
+/** select a new "running" task */
+int __sched_reschedule(struct scheduler* sched, struct list_head * to_list)
+{
+	if (sched->running) {
+		uint64_t now = timer_get_ticks();
+		uint64_t delta = now - __sched.running->last_ran_ticks;
+		__sched.running->ran_ticks += kmax(delta, 1);
+		sched->running->last_ran_ticks = now;
+
+		if (sched->running != &__sched_idle) {
+			list_add_tail(&sched->running->tasklist, to_list);
+		}
+		sched->running = NULL;
+	}
+
+	// list_for_each_entry_safe(iter, &sched->tasks.sleeping, next, tasklist) {
+	// 	if (timer_get_ticks() > iter->wake_tick) {
+	// 		__sched_move_task(sched, iter, &sched->tasks.ready);
+	// 	}
+	// 	break;
+	// }
 
 	return 0;
+}
+
+void __sched_move_task(struct scheduler * sched, struct task * task, struct list_head * list)
+{
+	if (list_placed_in_list(&task->tasklist)) {
+		list_del(&task->tasklist);
+	}
+
+	list_add_tail(&task->tasklist, list);
+}
+
+static inline bool sched_need_resched(void)
+{
+	struct task* current = cpu_get_local()->current;
+	return current->need_resched;
+}
+
+void sched_schedule(void)
+{
+	do {
+		cpu_preempt_disable();
+		__schedule();
+		cpu_preempt_enable();
+	} while (sched_need_resched());
+}
+
+/** move the current task into the blocked state */
+void sched_block(void)
+{
+	if (__sched.running) {
+		__sched.running->state = TASK_ST_SLEEPING_INTR;
+	}
+	__sched_yield(&__sched.tasks.blocked);
+}
+
+static void __sched_unblock(struct task * task)
+{
+	task->state = TASK_ST_RUNNING;
+	__sched_move_task(&__sched, task, &__sched.tasks.ready);
+}
+
+void sched_unblock(struct task * task)
+{
+	irq_flags_t flags;
+	spin_lock_irqsave(&__sched.lock, &flags);
+	__sched_unblock(task);
+	spin_unlock_restore(&__sched.lock, flags);
 }
 
 
@@ -97,24 +214,6 @@ void sched_exit(int status)
 	     task->name, status);
 }
 
-static int sched_idle(void* token)
-{
-	static uint64_t thresh = TIMER_TICKS_PER_SECOND*5;
-	while (1) {
-		uint64_t now = timer_get_ms();
-		if (cpu_get_local()->current->ran_ticks  >= thresh) {
-			thresh += TIMER_TICKS_PER_SECOND*5;
-			klog_info("Run for %llu ms, uptime %lld.%03lldms\n",
-					1000 * cpu_get_local()->current->ran_ticks / TIMER_TICKS_PER_SECOND,
-					now / 1000,
-					now % 1000);
-		}
-		hlt();
-	}
-}
-
-struct task __sched_idle;
-
 int sched_init(void)
 {
 	int ret;
@@ -122,8 +221,8 @@ int sched_init(void)
 	if (ret) {
 		return ret;
 	}
-	cpu_get_local()->scheduler.cr3 = cpu_read_cr3();
 	sched_add(&__sched_idle);
+	cpu_get_local()->scheduler.cr3 = cpu_read_cr3();
 	return 0;
 }
 
@@ -136,18 +235,24 @@ int sched_add(struct task* task)
 	return 0;
 }
 
-void sched_yield(void)
+static void __sched_yield(struct list_head * to_list)
 {
 	cli();
 	if (__sched.running) {
 		arch_task_context_save(&__sched.running->arch_context);
 	}
 
-	__sched_reschedule(&__sched);
+	__sched_reschedule(&__sched, to_list);
 
 	arch_task_context_restore(&__sched.running->arch_context);
 	sti();
 }
+
+void sched_yield(void)
+{
+	__sched_yield(&__sched.tasks.ready);
+}
+
 void sched_reschedule(void);
 void sched_exit(int status);
 
@@ -159,23 +264,3 @@ void sched_task_entry(void)
 	sched_exit(fn(entering->privdata));
 }
 
-void sched_sleep_ms(uint32_t ms)
-{
-	unsigned long now = timer_get_ticks();
-	unsigned long then = now + (ms * TIMER_TICKS_PER_SECOND / 1000);
-
-	struct task* current = cpu_get_local()->current;
-	current->wake_tick = then;
-	current->state = TASK_ST_SLEEPING;
-
-	sched_yield();
-}
-
-void sched_start(void)
-{
-	irq_enable();
-
-	while (1) {
-		cpu_halt();
-	}
-}

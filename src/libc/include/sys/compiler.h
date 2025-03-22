@@ -24,13 +24,15 @@
 #define __always_inline inline __atr(always_inline)
 #define __naked         __atr(naked)
 #define __cleanup(cmd)  __atr(cleanup(cmd))
-#define __printf(f, a)  __atr(format(printf, f, a))
+#define __format(fmtpos, argpos)  __atr(format(printf, fmtpos, argpos))
 #define __noreturn      __atr(noreturn);
 
 #define __kernel        __atr(address_space(0))
 #define __user          __atr((noderef, address_space(__user)))
 #define __iomem         __atr((noderef, address_space(__iomem)))
 #define __percpu        __atr((noderef, address_space(__percpu)))
+
+#define noinline         __atr(noinline)
 
 #define __comptime_assert(cond, msg, prefix, suffix) \
 	do {\

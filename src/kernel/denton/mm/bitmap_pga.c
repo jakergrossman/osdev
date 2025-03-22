@@ -1,7 +1,6 @@
 #include <denton/mm/bitmap_pga.h>
 
 #include <denton/mm/pga.h>
-#include <denton/atomic.h>
 #include <denton/types.h>
 #include <denton/bits.h>
 #include <denton/bma.h>

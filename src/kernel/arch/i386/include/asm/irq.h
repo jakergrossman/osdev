@@ -4,7 +4,6 @@
 #include "asm/instr.h"
 #include "denton/bits/bits.h"
 #include "sys/compiler.h"
-#include <denton/atomic.h>
 #include <denton/list.h>
 #include <denton/types.h>
 #include <denton/compiler.h>

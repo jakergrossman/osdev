@@ -9,7 +9,7 @@
 
 
 struct page {
-	atomic_t use_count;
+	_Atomic(unsigned long) use_count;
 	page_frame_t page_number;
 
 	/* log2 of the number of pages allocated with this one */

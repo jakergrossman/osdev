@@ -60,7 +60,7 @@ void klog_sink_register(struct klog_sink* sink);
 void klog_sink_deregister(struct klog_sink* sink);
 
 /** do a klog */
-void __klog(const char* funcname, enum klog_level level, const char* fmt, ...) __printf(3, 4);
+void __klog(const char* funcname, enum klog_level level, const char* fmt, ...) __format(3, 4);
 
 /* printf-style logging macro */
 #define klog(level, fmt, ...) __klog(__func__, (level), (fmt) __VA_OPT__(,) __VA_ARGS__)
