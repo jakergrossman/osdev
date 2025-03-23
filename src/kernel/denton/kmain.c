@@ -20,6 +20,7 @@
 #include <limits.h>
 #include <stdatomic.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 static SEM_DECL(sem, 0);
@@ -45,7 +46,9 @@ static int producer_task(void * intervalp)
 	
 	for (;;) {
 		sleep_ms((long)intervalp);
-		klog_info("%ld\n", (long)intervalp);
+		// klog_info("%ld\n", (long)intervalp);
+		atomic_fetch_add(&__cont, 1);
+		sem_up(&sem);
 	}
 
 	return (int)intervalp;
@@ -56,9 +59,9 @@ static int consumer_task(void * descp)
 	klog_info("starting %s\n", (char*)descp);
 
 	for (;;) {
-		// sem_down(&sem);
+		sem_down(&sem);
 		unsigned long val = atomic_load(&__cont);
-		klog_info("%s: %ld\n", (char*)descp, val);
+		klog_info("%ld\n", val);
 	}
 }
 
@@ -83,12 +86,17 @@ void kmain(void)
 	sched_init();
 
 	struct task* p1 = kmalloc(PAGE_SIZE, PGF_KERNEL);
-	task_init("p1", producer_task, (void*)(200), p1);
-	struct task* p2 = kmalloc(PAGE_SIZE, PGF_KERNEL);
-	task_init("p2", producer_task, (void*)(500), p2);
-
+	task_init("p1", producer_task, (void*)(20), p1);
 	sched_add(p1);
-	sched_add(p2);
+
+	struct task* cons[5];
+	for (int i = 0; i < 5; i++) {
+		cons[i] = kmalloc(PAGE_SIZE, PGF_KERNEL);
+		char buf[16];
+		snprintf(buf, sizeof(buf), "c%d\n", i);
+		task_init("c1", consumer_task, buf, cons[i]);
+		sched_add(cons[i]);
+	}
 
 	sched_start();
 }

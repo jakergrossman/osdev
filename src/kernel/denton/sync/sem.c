@@ -58,10 +58,9 @@ static inline int __sem_down(sem_t* sem)
 
 	for (;;) {
 		// TODO: signalling
-		spin_unlock(&sem->lock);
-		__sched_set_state(TASK_ST_BLOCKED_INTR);
-		sched_schedule();
-		spin_lock(&sem->lock);
+		not_using_spin_lock(&sem->lock) {
+			sched_block();
+		}
 		if (waiter.up) {
 			return 0;
 		}

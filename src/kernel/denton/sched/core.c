@@ -173,3 +173,19 @@ long sched_timeout(long timeout)
 		return __sched_timeout(timeout);
 	}
 }
+
+void sched_block(void)
+{
+	using_spin_lock(&__sched.lock) {
+		__rr_block(&__sched, cpu_get_local()->current);
+	}
+
+	sched_schedule();
+}
+
+void sched_unblock(struct task * task)
+{
+	using_spin_lock(&__sched.lock) {
+		__rr_unblock(&__sched, task);
+	}
+}
