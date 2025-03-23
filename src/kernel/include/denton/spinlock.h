@@ -41,6 +41,6 @@ spin_lock_cleanup(spinlock_t** lock)
  * It's useful in sections of code where we may go to sleep, and we want to
  * release the lock before yielding, and then acquire the lock back when we
  * start running again. */
-#define not_using_spin_lock(lockp) scoped_using_cond(1, spin_lock, spin_lock_cleanup, lockp)
+#define not_using_spin_lock(lockp) scoped_using_cond(1, spin_unlock, spin_unlock_cleanup, lockp)
 
 #endif
