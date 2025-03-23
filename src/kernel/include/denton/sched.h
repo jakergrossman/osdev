@@ -48,6 +48,8 @@ int  sched_sleep_ticks_interruptible(int ticks);
 int  sched_sleep_ms(int ticks);
 int  sched_sleep_ms_interruptible(int ticks);
 
+long sched_timeout(long timeout);
+
 void __sched_entry_point(void);
 void __sched_set_state(enum task_state state);
 

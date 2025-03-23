@@ -4,8 +4,10 @@
 #include "denton/heap.h"
 #include "denton/mm/mm_types.h"
 #include "denton/sched.h"
+#include "denton/sched/sleep.h"
 #include "denton/sched/task.h"
 #include "denton/sync/sem.h"
+#include "denton/time/timer.h"
 #include <denton/bits.h>
 #include <denton/tty.h>
 #include <denton/klog.h>
@@ -40,15 +42,12 @@ _Atomic(unsigned long) __cont = 0;
 static int producer_task(void * intervalp)
 {
 	klog_info("starting\n");
-	return -1;
 	
-	for (size_t i; i < 500; i++) {
-		// uintptr_t step = (uintptr_t)intervalp;
-		// tsleep(step);
-		atomic_fetch_add(&__cont, 1);
-		// sem_up(&sem);
-		klog_info("up %d\n", (uintptr_t)intervalp);
+	for (;;) {
+		sleep_ms((long)intervalp);
+		klog_info("%ld\n", (long)intervalp);
 	}
+
 	return (int)intervalp;
 }
 
@@ -63,6 +62,10 @@ static int consumer_task(void * descp)
 	}
 }
 
+void tcb(struct timer * timer)
+{
+	klog_info("tcb\n");
+}
 
 void kmain(void)
 {
@@ -79,20 +82,12 @@ void kmain(void)
 
 	sched_init();
 
-	struct task* producer = kmalloc(PAGE_SIZE, PGF_KERNEL);
-	task_init("p1", producer_task, (void*)(200), producer);
+	struct task* p1 = kmalloc(PAGE_SIZE, PGF_KERNEL);
+	task_init("p1", producer_task, (void*)(200), p1);
 	struct task* p2 = kmalloc(PAGE_SIZE, PGF_KERNEL);
-	task_init("p2", producer_task, (void*)(4), p2);
-	struct task* c1 = kmalloc(PAGE_SIZE, PGF_KERNEL);
-	task_init("kernel_bar", consumer_task, "c1", c1);
-	struct task* c2 = kmalloc(PAGE_SIZE, PGF_KERNEL);
-	task_init("kernel_bar", consumer_task, "c2", c2);
-	struct task* c3 = kmalloc(PAGE_SIZE, PGF_KERNEL);
-	task_init("kernel_bar", consumer_task, "c3", c3);
+	task_init("p2", producer_task, (void*)(500), p2);
 
-	// sched_add(c1);
-	// sched_add(c2);
-	sched_add(producer);
+	sched_add(p1);
 	sched_add(p2);
 
 	sched_start();

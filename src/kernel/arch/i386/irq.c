@@ -1,5 +1,6 @@
 #include "asm/cpu.h"
 #include "denton/sched.h"
+#include "denton/time/timer.h"
 #include <denton/heap.h>
 #include <denton/klog.h>
 #include <denton/kstring.h>
@@ -88,6 +89,8 @@ void irq_global_handler(struct irq_frame* iframe)
 	if (pic8259_irq >= 0) {
 		pic8259_enable_irq(pic8259_irq);
 	}
+
+	timer_run_pending();
 
 	if (cpu_get_local()->allow_preempt && cpu_get_local()->reschedule) {
 		cpu_get_local()->reschedule = false;

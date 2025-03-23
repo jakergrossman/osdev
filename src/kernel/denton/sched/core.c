@@ -3,10 +3,13 @@
 #include "asm/irq.h"
 #include "asm/sched/task.h"
 #include "asm/timer.h"
+#include "denton/container_of.h"
 #include "denton/heap.h"
 #include "denton/klog.h"
 #include "denton/mm/mm_types.h"
+#include "denton/sched.h"
 #include "denton/spinlock.h"
+#include "denton/time/timer.h"
 #include <denton/list.h>
 #include <denton/sched/task.h>
 #include <asm/sync/spinlock.h>
@@ -16,6 +19,7 @@ struct rr_sched {
 	spinlock_t lock;
 	struct list_head ready_list;
 	struct list_head notready_list;
+	struct list_head sleep_list;
 	struct task* __idle;
 };
 
@@ -54,14 +58,7 @@ static struct rr_sched __sched = {
 
 static int __sched_idle(void* token)
 {
-	const unsigned int dur = 1000;
-	static unsigned int uptime = 0;
 	while (1) {
-		unsigned long up_ms = timer_get_ms();
-		if (up_ms >= uptime+dur) {
-			klog_info("uptime: %ld.%03ld\n", up_ms / 1000, up_ms % 1000);
-			uptime = up_ms;
-		}
 		cpu_halt();
 	}
 }
@@ -130,7 +127,49 @@ void sched_start(void)
 {
 	irq_enable();
 
-	while (1) {
-		cpu_halt();
+	sched_schedule();
+
+	while (1);
+}
+
+struct sched_timeout_timer {
+	struct timer timer;
+	struct task* task;
+};
+
+static struct sched_timeout_timer * from_timer(struct timer * timer)
+{
+	return container_of(timer, struct sched_timeout_timer, timer);
+}
+
+static void sched_process_timeout(struct timer * timer)
+{
+	struct sched_timeout_timer* tt = from_timer(timer);
+	__rr_unblock(&__sched, tt->task);
+}
+
+long __sched_timeout(long timeout)
+{
+	struct sched_timeout_timer timer;
+	unsigned long expire = timeout + timer_get_ticks();
+
+	timer.task = cpu_get_local()->current;
+	timer_init_oneshot(&timer.timer, sched_process_timeout, timeout);
+	timer_add(&timer.timer);
+
+	not_using_spin_lock(&__sched.lock) {
+		sched_schedule();
+	}
+
+	timeout = expire - timer_get_ticks();
+
+	return (timeout < 0) ? 0 : timeout;
+}
+
+long sched_timeout(long timeout)
+{
+	using_spin_lock(&__sched.lock) {
+		__rr_block(&__sched, cpu_get_local()->current);
+		return __sched_timeout(timeout);
 	}
 }
