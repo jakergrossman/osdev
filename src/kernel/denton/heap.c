@@ -17,7 +17,7 @@ void* kmalloc(size_t size, uint32_t flags)
 	// really dumb, for now
 	size_t required_pages = PAGE_ALIGN(size) / PAGE_SIZE;
 	struct page* start_page = page_alloc(required_pages, flags);
-	return start_page->virt;
+	return start_page ? start_page->virt : NULL;
 }
 
 void* kzalloc(size_t size, uint32_t flags)
