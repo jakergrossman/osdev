@@ -153,6 +153,10 @@ long __sched_timeout(long timeout)
 	struct sched_timeout_timer timer;
 	unsigned long expire = timeout + timer_get_ticks();
 
+	if (timeout <= 0) {
+		return 0;
+	}
+
 	timer.task = cpu_get_local()->current;
 	timer_init_oneshot(&timer.timer, sched_process_timeout, timeout);
 	timer_add(&timer.timer);
