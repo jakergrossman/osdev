@@ -26,28 +26,6 @@ static __always_inline void hlt(void)
 	asm volatile ( "hlt" );
 }
 
-static __always_inline void
-outb(uint8_t value, uint16_t port)
-{
-	asm volatile (
-		"outb %1, %0"
-		:
-		: "dN" (port), "a" (value)
-	);
-}
-
-static __always_inline uint8_t
-inb(uint16_t port)
-{
-	uint8_t ret;
-	asm volatile (
-		"inb %1, %0"
-		: "=a" (ret)
-		: "dN" (port)
-	);
-	return ret;
-}
-
 static __always_inline uint32_t
 eflags_read(void)
 {
