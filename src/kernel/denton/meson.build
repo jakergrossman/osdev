@@ -6,6 +6,7 @@ kernel_c_sources = files(
   'ring.c',
   'klog.c',
   'bma.c',
+  'pci.c',
 )
 
 subdir('mm')

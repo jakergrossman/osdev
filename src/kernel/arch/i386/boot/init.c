@@ -6,6 +6,7 @@
 #include <denton/panic.h>
 #include <denton/multiboot.h>
 #include <denton/mm/bootmem.h>
+#include <denton/pci.h>
 
 #include <asm/cpuid.h>
 #include <asm/cpu.h>
@@ -99,6 +100,8 @@ void cmain(uint32_t magic, struct multiboot_info* mb_info)
 
 	/* now that we have dynamic memory, let's handle the command line */
 	kernel_cmdline_init(__kernel_cmdline);
+
+	pci_init();
 
 	/* setup interrupt controller */
 	pic8259_init();
