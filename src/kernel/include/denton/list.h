@@ -12,80 +12,6 @@ struct list_head {
 	struct list_head* next;
 };
 
-static inline void
-list_init(struct list_head* list)
-{
-	list->next = list;
-	list->prev = list;
-}
-
-#define LIST_HEAD_INIT(name) { &(name), &(name) }
-#define LIST_HEAD(name) \
-	struct list_head name = LIST_HEAD_INIT(name)
-
-static inline void
-__list_add(struct list_head* added,
-		   struct list_head* prev,
-		   struct list_head* next)
-{
-	next->prev = added;
-	added->next = next;
-
-	added->prev = prev;
-	prev->next = added;
-}
-
-static inline void
-list_add(struct list_head* added, struct list_head* head)
-{
-	__list_add(added, head, head->next);
-}
-
-static inline void
-list_add_tail(struct list_head* added, struct list_head* head)
-{
-	__list_add(added, head->prev, head);
-}
-
-
-static inline void
-__list_del(struct list_head * prev, struct list_head * next)
-{
-	next->prev = prev;
-	WRITE_ONCE(prev->next, next);
-}
-
-static inline struct list_head* 
-list_del(struct list_head * entry)
-{
-	__list_del(entry->prev, entry->next);
-	entry->next = entry;
-	entry->prev = entry;
-	return entry;
-}
-
-static inline bool
-list_empty(struct list_head * entry)
-{
-	return entry->next == entry;
-}
-
-static inline void
-list_rotate(struct list_head * entry)
-{
-	struct list_head* head = entry;
-	struct list_head* prev = head->prev;
-	list_add_tail(list_del(entry), prev);
-}
-
-
-/* return whether @entry is placed in a list */
-static inline bool
-list_placed_in_list(struct list_head * entry)
-{
-	return !list_empty(entry);
-}
-
 #define list_entry(iter, type, member) \
 	container_of(iter, type, member)
 
@@ -126,5 +52,95 @@ list_placed_in_list(struct list_head * entry)
 
 #define list_pop_tail(ptr, type, member) \
 	(list_empty(ptr) ? NULL : list_entry(list_del((ptr)->prev, type, member)
+
+static inline void
+list_init(struct list_head* list)
+{
+	list->next = list;
+	list->prev = list;
+}
+
+#define LIST_HEAD_INIT(name) { &(name), &(name) }
+#define LIST_HEAD(name) \
+	struct list_head name = LIST_HEAD_INIT(name)
+
+static inline void
+__list_add(struct list_head* added,
+		   struct list_head* prev,
+		   struct list_head* next)
+{
+	next->prev = added;
+	added->next = next;
+
+	added->prev = prev;
+	prev->next = added;
+}
+
+static inline void
+list_add(struct list_head* added, struct list_head* head)
+{
+	__list_add(added, head, head->next);
+}
+
+static inline void
+list_add_tail(struct list_head* added, struct list_head* head)
+{
+	__list_add(added, head->prev, head);
+}
+
+static inline void
+list_add_sorted(struct list_head * added, struct list_head * head,
+                int (*cmp)(struct list_head * a, struct list_head * b))
+{
+	struct list_head * iter;
+	list_for_each(iter, head) {
+		if (cmp(added, iter) < 0) {
+			list_add_tail(added, iter);
+			return;
+		}
+	}
+
+	/* nothing satisfies cmp, add at end of list */
+	list_add_tail(added, head);
+}
+
+
+static inline void
+__list_del(struct list_head * prev, struct list_head * next)
+{
+	next->prev = prev;
+	WRITE_ONCE(prev->next, next);
+}
+
+static inline struct list_head* 
+list_del(struct list_head * entry)
+{
+	__list_del(entry->prev, entry->next);
+	entry->next = entry;
+	entry->prev = entry;
+	return entry;
+}
+
+static inline bool
+list_empty(struct list_head * entry)
+{
+	return entry->next == entry;
+}
+
+static inline void
+list_rotate(struct list_head * entry)
+{
+	struct list_head* head = entry;
+	struct list_head* prev = head->prev;
+	list_add_tail(list_del(entry), prev);
+}
+
+
+/* return whether @entry is placed in a list */
+static inline bool
+list_placed_in_list(struct list_head * entry)
+{
+	return !list_empty(entry);
+}
 
 #endif
