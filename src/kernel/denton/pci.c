@@ -14,20 +14,6 @@ enum {
 	PCI_INVALID_VID = 0xFFFF,
 };
 
-enum {
-	PCI_REG_VID = 0x00,
-	PCI_REG_PID = 0x02,
-	PCI_REG_CMD = 0x04,
-	PCI_REG_STATUS = 0x06,
-	PCI_REG_REVID = 0x08,
-	PCI_REG_PROG_INTF = 0x09,
-	PCI_REG_SUBCLASS = 0x0A,
-	PCI_REG_CLASS = 0x0B,
-	PCI_REG_HEADER_TYPE = 0x0E,
-
-	PCI_REG_PRIMARY_BUS = 0x18,
-	PCI_REG_SECONDARY_BUS = 0x19,
-};
 
 enum {
 	PCI_HEADER_MULTI_FUNC = 0x80,
@@ -40,6 +26,9 @@ struct pci_dev_entry {
 };
 
 static LIST_HEAD(pci_dev_list);
+
+#define pci_from_entry(dev) \
+	container_of(dev, struct pci_dev, pci_entry)
 
 static const char * pci_class_names[] = {
 	[PCI_CLASS_NONE] = "No PCI Class",
@@ -169,94 +158,95 @@ static void pci_get_dev_vendor(struct pci_dev * dev, uint16_t * vendor, uint16_t
 	*device = pci_cfg_read16(dev, 2);
 }
 
-static int pci_init_dev_info(struct pci_dev_info * info)
+static int pci_init_dev_info(struct pci_dev * dev)
 {
-	pci_get_dev_vendor(&info->dev, &info->vid, &info->pid);
+	pci_get_dev_vendor(dev, &dev->info.vid, &dev->info.pid);
 
-	if (info->vid == PCI_INVALID_VID) {
+	if (dev->info.vid == PCI_INVALID_VID) {
 		return -EINVAL;
 	}
 
-	info->header_type = pci_cfg_read8(&info->dev, PCI_REG_HEADER_TYPE);
-	info->klass = pci_cfg_read8(&info->dev, PCI_REG_CLASS);
-	info->subclass = pci_cfg_read8(&info->dev, PCI_REG_SUBCLASS);
-	info->procif = pci_cfg_read8(&info->dev, PCI_REG_PROG_INTF);
+	dev->info.header_type = pci_cfg_read8(dev, PCI_REG_HEADER_TYPE);
+	dev->info.klass = pci_cfg_read8(dev, PCI_REG_CLASS);
+	dev->info.subclass = pci_cfg_read8(dev, PCI_REG_SUBCLASS);
+	dev->info.procif = pci_cfg_read8(dev, PCI_REG_PROG_INTF);
 
 	return 0;
+}
+
+static int pci_dev_info_cmp(struct pci_dev_info * a, struct pci_dev_info * b)
+{
+	/* concat for easy cmp */
+	uint32_t aval = (a->func   << 0 ) |
+	                (a->device << 8 ) |
+	                (a->bus    << 16);
+	uint32_t bval = (b->func   << 0 ) |
+	                (b->device << 8 ) |
+	                (b->bus    << 16);
+
+	if (aval < bval) {
+		return -1;
+	} else if (aval > bval) {
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 static int pci_dev_cmp(struct list_head * lista, struct list_head * listb)
 {
-	struct pci_dev_entry* a = container_of(lista, struct pci_dev_entry, entry);
-	struct pci_dev_entry* b = container_of(listb, struct pci_dev_entry, entry);
-
-	if (a->info.dev.bus < b->info.dev.bus) {
-		return -1;
-	} else if (a->info.dev.bus > b->info.dev.bus) {
-		return 1;
-	}
-
-	if (a->info.dev.dev < b->info.dev.dev) {
-		return -1;
-	} else if (a->info.dev.dev > b->info.dev.dev) {
-		return 1;
-	}
-
-	if (a->info.dev.func < b->info.dev.func) {
-		return -1;
-	} else if (a->info.dev.func > b->info.dev.func) {
-		return 1;
-	}
-
-	return 0;
+	struct pci_dev* a = container_of(lista, struct pci_dev, pci_entry);
+	struct pci_dev* b = container_of(listb, struct pci_dev, pci_entry);
+	return pci_dev_info_cmp(&a->info, &b->info);
 }
 
 static void pci_add_dev(struct pci_dev_info * info)
 {
-	struct pci_dev_entry* entry = kmalloc(sizeof(*entry), PGF_KERNEL);
-	list_init(&entry->entry);
-	entry->info = *info;
+	struct pci_dev* dev = kmalloc(sizeof(*dev), PGF_KERNEL);
+	list_init(&dev->pci_entry);
+	dev->info = *info;
 
 	const char* klassname;
 	const char* subklassname;
 	pci_get_class_names(info->klass, info->subclass, &klassname, &subklassname);
 
 	klog_info("PCI %02d:%02d.%1d: %04X:%04X - %s%s%s\n",
-	          info->dev.bus, info->dev.dev,
-	          info->dev.func, info->vid, info->pid,
+	          dev->info.bus, dev->info.device,
+	          dev->info.func, info->vid, info->pid,
 	          (klassname ? klassname : "UNKNOWN_CLASS"),
 	          (subklassname ? ", " : ""),
 	          (subklassname ? subklassname : "")
 	);
 
-	list_add_sorted(&entry->entry, &pci_dev_list, pci_dev_cmp);
+	list_add_sorted(&dev->pci_entry, &pci_dev_list, pci_dev_cmp);
 
 	if (info->header_type & PCI_HEADER_BRIDGE) {
-		pci_enumerate(pci_cfg_read8(&info->dev, PCI_REG_SECONDARY_BUS));
+		pci_enumerate(pci_cfg_read8(dev, PCI_REG_SECONDARY_BUS));
 	}
 }
 
 void pci_enumerate(int busno)
 {
 	for (int slot = 0; slot < 32; slot++) {
-		struct pci_dev_info info = {
-			.dev.bus = busno,
-			.dev.dev = slot,
+		/** dummy PCI device for query */
+		struct pci_dev dev = {
+			.info.bus = busno,
+			.info.device = slot,
 		};
 
-		if (pci_init_dev_info(&info)) {
+		if (pci_init_dev_info(&dev)) {
 			continue;
 		}
 
-		pci_add_dev(&info);
+		pci_add_dev(&dev.info);
 
-		if (info.header_type & PCI_HEADER_MULTI_FUNC) {
-			for(info.dev.func = 1; info.dev.func < 8; info.dev.func++) {
-				if (pci_init_dev_info(&info)) {
+		if (dev.info.header_type & PCI_HEADER_MULTI_FUNC) {
+			for(dev.info.func = 1; dev.info.func < 8; dev.info.func++) {
+				if (pci_init_dev_info(&dev)) {
 					continue;
 				}
 
-				pci_add_dev(&info);
+				pci_add_dev(&dev.info);
 			}
 		}
 	}
@@ -275,46 +265,99 @@ pci_addr_t pci_addr_create(uint8_t bus, uint8_t dev, uint8_t func, uint8_t reg_o
 
 uint32_t pci_cfg_read32(struct pci_dev * dev, uint8_t reg)
 {
-	pci_addr_t addr = pci_addr_create(dev->bus, dev->dev, dev->func, reg);
+	pci_addr_t addr = pci_addr_create(dev->info.bus, dev->info.device, dev->info.func, reg);
 	out32(addr.addr_word, PCI_CONFIG_ADDRESS);
 	return in32(PCI_CONFIG_DATA);
 }
 
 uint16_t pci_cfg_read16(struct pci_dev * dev, uint8_t reg)
 {
-	pci_addr_t addr = pci_addr_create(dev->bus, dev->dev, dev->func, reg);
+	pci_addr_t addr = pci_addr_create(dev->info.bus, dev->info.device, dev->info.func, reg);
 	out32(addr.addr_word, PCI_CONFIG_ADDRESS);
 	return in16(PCI_CONFIG_DATA);
 }
 
 uint8_t pci_cfg_read8(struct pci_dev * dev, uint8_t reg)
 {
-	pci_addr_t addr = pci_addr_create(dev->bus, dev->dev, dev->func, reg);
+	pci_addr_t addr = pci_addr_create(dev->info.bus, dev->info.device, dev->info.func, reg);
 	out32(addr.addr_word, PCI_CONFIG_ADDRESS);
 	return in8(PCI_CONFIG_DATA);
 }
 
 void pci_cfg_write32(struct pci_dev * dev, uint8_t reg, uint32_t value)
 {
-	pci_addr_t addr = pci_addr_create(dev->bus, dev->dev, dev->func, reg);
+	pci_addr_t addr = pci_addr_create(dev->info.bus, dev->info.device, dev->info.func, reg);
 	out32(addr.addr_word, PCI_CONFIG_ADDRESS);
 	out32(value, PCI_CONFIG_DATA);
 }
 
 void pci_cfg_write16(struct pci_dev * dev, uint8_t reg, uint16_t value)
 {
-	pci_addr_t addr = pci_addr_create(dev->bus, dev->dev, dev->func, reg);
+	pci_addr_t addr = pci_addr_create(dev->info.bus, dev->info.device, dev->info.func, reg);
 	out32(addr.addr_word, PCI_CONFIG_ADDRESS);
 	out16(value, PCI_CONFIG_DATA);
 }
 
 void pci_cfg_write8(struct pci_dev * dev, uint8_t reg, uint8_t  value)
 {
-	pci_addr_t addr = pci_addr_create(dev->bus, dev->dev, dev->func, reg);
+	pci_addr_t addr = pci_addr_create(dev->info.bus, dev->info.device, dev->info.func, reg);
 	out32(addr.addr_word, PCI_CONFIG_ADDRESS);
 	out8(value, PCI_CONFIG_DATA);
 }
 
+static bool pci_match(struct pci_dev_info * query, struct pci_dev_info * target)
+{
+	if ((query->vid != PCI_ANY_ID) && (query->vid != target->vid)) {
+		return false;
+	}
+
+	if ((query->pid != PCI_ANY_ID) && (query->pid != target->pid)) {
+		return false;
+	}
+
+	if ((query->klass != (uint8_t)PCI_ANY_ID) && (query->klass != target->klass)) {
+		return false;
+	}
+
+	if ((query->subclass != (uint8_t)PCI_ANY_ID) && (query->subclass != target->subclass)) {
+		return false;
+	}
+
+	return true;
+}
+
+struct pci_dev * pci_find_device(
+	uint16_t vid, uint16_t pid,
+	uint16_t klass, uint16_t subclass,
+	struct pci_dev * from
+) {
+	struct list_head* iter = from ? &from->pci_entry : &pci_dev_list;
+	struct pci_dev_info query = {
+		.vid = vid,
+		.pid = pid,
+		.klass = klass,
+		.subclass = subclass,
+	};
+	list_for_each(iter, &pci_dev_list) {
+		struct pci_dev* target = pci_from_entry(iter);
+		if (pci_match(&query, &target->info)) {
+			return target;
+		}
+	}
+	return NULL;
+}
+
+bool pci_has_interrupt(struct pci_dev * dev)
+{
+    uint8_t int_line = pci_cfg_read8(dev, PCI_REG_INTERRUPT);
+    uint8_t result;
+
+    pci_cfg_write8(dev, PCI_REG_INTERRUPT, 0xFE);
+    result = pci_cfg_read8(dev, PCI_REG_INTERRUPT);
+    pci_cfg_write8(dev, PCI_REG_INTERRUPT, int_line);
+
+    return result == 0xFE;
+}
 
 void pci_init(void)
 {
