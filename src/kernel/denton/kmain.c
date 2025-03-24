@@ -1,13 +1,8 @@
-#include "asm/cpu.h"
-#include "asm/paging.h"
-#include "asm/timer.h"
-#include "denton/heap.h"
-#include "denton/mm/mm_types.h"
-#include "denton/sched.h"
-#include "denton/sched/sleep.h"
-#include "denton/sched/task.h"
-#include "denton/sync/sem.h"
-#include "denton/time/timer.h"
+#include <denton/heap.h>
+#include <denton/mm/mm_types.h>
+#include <denton/sched.h>
+#include <denton/sched/task.h>
+#include <denton/time/timer.h>
 #include <denton/bits.h>
 #include <denton/tty.h>
 #include <denton/klog.h>
@@ -16,59 +11,12 @@
 #include <denton/ring.h>
 
 #include <asm/irq.h>
+#include <asm/cpu.h>
+#include <asm/paging.h>
 
 #include <limits.h>
 #include <stdatomic.h>
 #include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-static SEM_DECL(sem, 0);
-
-extern void msleep(unsigned long millis);
-extern void tsleep(unsigned long ticks)
-{;
-	unsigned long now = timer_get_ticks();
-	unsigned long then = now + ticks;
-
-	struct task* current = cpu_get_local()->current;
-	current->wake_tick = then;
-	current->state = TASK_ST_SLEEPING;
-
-	// sched_yield();
-}
-
-_Atomic(unsigned long) __cont = 0;
-
-static int producer_task(void * intervalp)
-{
-	klog_info("starting\n");
-	
-	for (;;) {
-		sleep_ms((long)intervalp);
-		// klog_info("%ld\n", (long)intervalp);
-		atomic_fetch_add(&__cont, 1);
-		sem_up(&sem);
-	}
-
-	return (int)intervalp;
-}
-
-static int consumer_task(void * descp)
-{
-	klog_info("starting %s\n", (char*)descp);
-
-	for (;;) {
-		sem_down(&sem);
-		unsigned long val = atomic_load(&__cont);
-		klog_info("%ld\n", val);
-	}
-}
-
-void tcb(struct timer * timer)
-{
-	klog_info("tcb\n");
-}
 
 void kmain(void)
 {
@@ -84,19 +32,6 @@ void kmain(void)
 	}
 
 	sched_init();
-
-	struct task* p1 = kmalloc(PAGE_SIZE, PGF_KERNEL);
-	task_init("p1", producer_task, (void*)(20), p1);
-	sched_add(p1);
-
-	struct task* cons[5];
-	for (int i = 0; i < 5; i++) {
-		cons[i] = kmalloc(PAGE_SIZE, PGF_KERNEL);
-		char buf[16];
-		snprintf(buf, sizeof(buf), "c%d\n", i);
-		task_init("c1", consumer_task, buf, cons[i]);
-		sched_add(cons[i]);
-	}
 
 	sched_start();
 }
