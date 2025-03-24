@@ -7,6 +7,7 @@ kernel_c_sources = files(
   'klog.c',
   'bma.c',
   'pci.c',
+  'disk/ata.c',
 )
 
 subdir('mm')

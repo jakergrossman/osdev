@@ -33,5 +33,9 @@ void kmain(void)
 
 	sched_init();
 
+	extern void ata_detect(void);
+
+	ata_detect();
+
 	sched_start();
 }
