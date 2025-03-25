@@ -6,14 +6,36 @@ libgcc = cc.find_library('gcc')
 
 kernel_image = 'denton.bin'
 kernel_sysroot_dir = '/boot'
+kernel_link_args = [ '-T' + kernel_arch_linker_script.full_path(), '-D__LINKER__' ]
 
-kernel = executable(kernel_image,
+# this is a little ugly. we need an object to parse the initcalls out of, but
+# we can't use the full kernel, because it will try and link WITH the initcalls,
+# which we don't have yet! so, we build a dummy library to pull out the initcalls,
+# and use the objects from the library in the main compilation
+kernel_dummy_lib = static_library('__kernel',
   kernel_c_sources,
   kernel_arch_c_sources,
+  link_args : kernel_link_args,
+  link_depends : kernel_arch_linker_script,
   include_directories : [ kernel_inc_dirs, kernel_arch_inc_dirs ],
-  link_args : [ '-T' + kernel_arch_linker_script.full_path(), '-D__LINKER__' ],
+  dependencies : [ libk_dep, libgcc ],
+)
+
+prog_sh = find_program('sh')
+initcall_c = custom_target('initcall.c',
+  output : 'initcall.c',
+  input : script_initcall,
+  command : [prog_sh, '@INPUT@', kernel_dummy_lib.full_path(), '@OUTPUT@'],
+  depends : kernel_dummy_lib,
+)
+
+kernel = executable(kernel_image,
+  initcall_c,
+  objects : kernel_dummy_lib.extract_all_objects(recursive : true),
+  link_args : kernel_link_args,
   link_depends : kernel_arch_linker_script,
   dependencies : [ libk_dep, libgcc ],
+  include_directories : [ kernel_inc_dirs, kernel_arch_inc_dirs ],
 
   install: true,
   install_dir: kernel_sysroot_dir,

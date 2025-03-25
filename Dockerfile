@@ -10,7 +10,7 @@ ENV TARGET="i686-elf" \
     PREFIX="/usr/local"
 
 RUN apk add --no-cache --virtual .deps \
-    curl file gcc make musl-dev build-base \
+    curl file gcc make musl-dev build-base coreutils \
     mpc1-dev gmp-dev mpfr-dev meson grub mtools xorriso
 
 FROM base AS build

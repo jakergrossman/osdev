@@ -1,5 +1,6 @@
 #include "asm/sync/spinlock.h"
 #include "denton/bits/bits.h"
+#include "denton/initcall.h"
 #include "denton/klog.h"
 #include "denton/pci.h"
 #include <denton/errno.h>
@@ -201,4 +202,10 @@ void ata_detect(void)
 	__ata_detect(ata_pci, true);
 	__ata_detect(ata_pci, false);
 }
+
+static void ata_init(void)
+{
+	klog_info("HI IM HERE\n");
+}
+initcall_device(ata, ata_init);
 
