@@ -21,12 +21,27 @@
 
 static struct task kernel_init_task;
 
-static int kernel_init(void* unused)
+/* run early init functions in pre-scheduler environment */
+static void* kernel_early_init(void)
 {
 	void (**init_fn)(void);
 	for (init_fn = __initcalls; *init_fn; init_fn++) {
+		if (*init_fn == __init_core) {
+			break;
+		}
 		(*init_fn)();
 	}
+	return init_fn;
+}
+
+/* run init functions in post-scheduler environment */
+static int kernel_init(void* start)
+{
+	void (**init_fn)(void);
+	for (init_fn = start; *init_fn; init_fn++) {
+		(*init_fn)();
+	}
+	return 0;
 }
 
 void kmain(void)
@@ -34,11 +49,13 @@ void kmain(void)
 	// for now, update terminal base now that we are using the kernel pgdir
 	terminal_update_base(INIT_VGA);
 
-	klog_info("OS is running...\n");
 
 	sched_init();
 
-	task_init("kernel_init", kernel_init, NULL, &kernel_init_task);
+	/* start of initcalls to run post-scheduler */
+	void* after_sched_inits = kernel_early_init();
+
+	task_init("kernel_init", kernel_init, after_sched_inits, &kernel_init_task);
 	sched_add(&kernel_init_task);
 
 	sched_start();
