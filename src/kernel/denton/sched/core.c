@@ -10,8 +10,10 @@
 #include "denton/sched.h"
 #include "denton/spinlock.h"
 #include "denton/time/timer.h"
+#include <denton/compiler.h>
 #include <denton/list.h>
 #include <denton/sched/task.h>
+#include <denton/bug.h>
 #include <asm/sync/spinlock.h>
 
 /** round robin scheduler */
@@ -176,6 +178,8 @@ long sched_timeout(long timeout)
 		__rr_block(&__sched, cpu_get_local()->current);
 		return __sched_timeout(timeout);
 	}
+
+	BUG("escaped using_spin_lock?");
 }
 
 void sched_block(void)

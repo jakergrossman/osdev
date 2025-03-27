@@ -15,6 +15,7 @@ kernel_link_args = [ '-T' + kernel_arch_linker_script.full_path(), '-D__LINKER__
 kernel_dummy_lib = static_library('__kernel',
   kernel_c_sources,
   kernel_arch_c_sources,
+  c_args : '--no-pie',
   link_args : kernel_link_args,
   link_depends : kernel_arch_linker_script,
   include_directories : [ kernel_inc_dirs, kernel_arch_inc_dirs ],

@@ -49,7 +49,6 @@ void kmain(void)
 	// for now, update terminal base now that we are using the kernel pgdir
 	terminal_update_base(INIT_VGA);
 
-
 	sched_init();
 
 	/* start of initcalls to run post-scheduler */

@@ -1,3 +1,5 @@
+#include "asm-generic/cpu.h"
+#include "asm/bug.h"
 #include "asm/instr.h"
 #include "denton/klog.h"
 #include "denton/tty.h"
@@ -80,6 +82,26 @@ page_fault_handler(struct irq_frame* frame, void* priv)
 }
 
 
+static void
+invalid_op_handler(struct irq_frame* frame, void* priv)
+{
+	struct bug_entry* bug = bug_find(frame->eip);
+	if (!bug) {
+		/* not a bug entry, just garbage */
+		/* TODO: this should do something special like kill process ... */
+		unhandled_cpu_exception(frame, priv);
+	}
+
+	if (bug->why) {
+		klog_error("BUG at %s:%lu: %s\n", bug->file, bug->line, bug->why);
+	} else {
+		klog_error("BUG at %s:%lu!\n", bug->file, bug->line);
+	}
+
+	/* TODO: fixup EIP so execution can continue */
+	cpu_stop();
+}
+
 static struct irq_handler cpu_exceptions[] = {
 	[0] = IRQ_HANDLER_INIT(cpu_exceptions[0], "Divide By Zero", div_by_zero_handler, NULL, IRQ_INTERRUPT, 0),
 	[1] = IRQ_HANDLER_INIT(cpu_exceptions[0], "Debug", unhandled_cpu_exception, NULL, IRQ_INTERRUPT, 0),
@@ -87,7 +109,7 @@ static struct irq_handler cpu_exceptions[] = {
 	[3] = IRQ_HANDLER_INIT(cpu_exceptions[3], "Breakpoint", unhandled_cpu_exception, NULL, IRQ_INTERRUPT, 0),
 	[4] = IRQ_HANDLER_INIT(cpu_exceptions[4], "Overflow", unhandled_cpu_exception, NULL, IRQ_INTERRUPT, 0),
 	[5] = IRQ_HANDLER_INIT(cpu_exceptions[5], "Bound Range Exceeded", unhandled_cpu_exception, NULL, IRQ_INTERRUPT, 0),
-	[6] = IRQ_HANDLER_INIT(cpu_exceptions[6], "Invalid OP", unhandled_cpu_exception, NULL, IRQ_INTERRUPT, 0),
+	[6] = IRQ_HANDLER_INIT(cpu_exceptions[6], "Invalid OP", invalid_op_handler, NULL, IRQ_INTERRUPT, 0),
 	[7] = IRQ_HANDLER_INIT(cpu_exceptions[7], "Device Not Available", unhandled_cpu_exception, NULL, IRQ_INTERRUPT, 0),
 	[8] = IRQ_HANDLER_INIT(cpu_exceptions[8], "Double Fault", unhandled_cpu_exception, NULL, IRQ_INTERRUPT, 0),
 	[10] = IRQ_HANDLER_INIT(cpu_exceptions[10], "Invalid TSS", unhandled_cpu_exception, NULL, IRQ_INTERRUPT, 0),

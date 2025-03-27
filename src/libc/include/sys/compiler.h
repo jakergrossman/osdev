@@ -25,7 +25,7 @@
 #define __naked         __atr(naked)
 #define __cleanup(cmd)  __atr(cleanup(cmd))
 #define __format(fmtpos, argpos)  __atr(format(printf, fmtpos, argpos))
-#define __noreturn      __atr(noreturn);
+#define __noreturn      __atr(noreturn)
 
 #define __kernel        __atr(address_space(0))
 #define __user          __atr((noderef, address_space(__user)))
@@ -89,5 +89,11 @@
  */
 #define __is_constexpr(x) \
 	(sizeof(int) == sizeof(*(8 ? ((void *)((long)(x) * 0l)) : (int *)8)))
+
+#define VALUE_IFNOT_TEST(...) __VA_ARGS__
+#define VALUE_IFNOT_TEST0(...) __VA_ARGS__
+#define VALUE_IFNOT_TEST1(...)
+#define VALUE_IFNOT(COND, ...) VALUE_IFNOT_TEST ## COND ( __VA_ARGS__ )
+#define __VA_NOT_OPT__(...) VALUE_IFNOT(__VA_OPT__(1), #__VA_ARGS__)
 
 #endif

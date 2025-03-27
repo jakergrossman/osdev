@@ -20,6 +20,15 @@ SECTIONS
 	{
 		*(.data)
 	}
+
+	. = ALIGN(8);
+	__bug_table ALIGN(8) : AT (V2PL(ADDR(__bug_table)))
+	{
+		__BUG_TABLE_START = .;
+		KEEP(*(__bug_table));
+		__BUG_TABLE_END = .;
+	}
+
 	.bss ALIGN (4K) : AT (V2PL(ADDR(.bss)))
 	{
 		*(COMMON)

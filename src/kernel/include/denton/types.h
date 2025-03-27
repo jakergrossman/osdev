@@ -12,4 +12,6 @@ typedef __kvirtaddr_t virtaddr_t;
 
 #define ARRAY_LENGTH(arr) (sizeof(arr) / sizeof((arr)[0]))
 
+#define asm_inline asm __inline
+
 #endif
