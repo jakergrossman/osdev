@@ -210,7 +210,7 @@ static void pci_add_dev(struct pci_dev_info * info)
 	const char* subklassname;
 	pci_get_class_names(info->klass, info->subclass, &klassname, &subklassname);
 
-	klog_info("PCI %02d:%02d.%1d: %04X:%04X - %s%s%s\n",
+	klog_debug("PCI %02d:%02d.%1d: %04X:%04X - %s%s%s\n",
 	          dev->info.bus, dev->info.device,
 	          dev->info.func, info->vid, info->pid,
 	          (klassname ? klassname : "UNKNOWN_CLASS"),

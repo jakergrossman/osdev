@@ -1,3 +1,5 @@
+subdir('libd')
+
 kernel_c_sources = files(
   'init.c',
   'kmain.c',

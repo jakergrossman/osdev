@@ -10,6 +10,7 @@
 #include <denton/compiler.h>
 #include <denton/ring.h>
 #include <denton/initcall.h>
+#include <denton/version.h>
 
 #include <asm/irq.h>
 #include <asm/cpu.h>

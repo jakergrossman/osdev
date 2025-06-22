@@ -58,6 +58,7 @@ static struct rr_sched __sched = {
 	.notready_list = LIST_HEAD_INIT(__sched.notready_list),
 };
 
+__attribute__((noreturn))
 static int __sched_idle(void* token)
 {
 	while (1) {
@@ -120,7 +121,7 @@ void sched_task_entry(void)
 	taskfn_t fn = entering->fn;
 
 	int code = fn(entering->privdata);
-	klog_info("%s exit: %d\n", entering->name, code);
+	klog_trace("%s exit: %d\n", entering->name, code);
 	__rr_dequeue(&__sched, entering);
 	sched_schedule();
 }

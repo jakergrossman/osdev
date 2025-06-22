@@ -1,4 +1,3 @@
-
 #include <denton/klog.h>
 #include <denton/kmain.h>
 #include <denton/kparam.h>
@@ -7,6 +6,7 @@
 #include <denton/multiboot.h>
 #include <denton/mm/bootmem.h>
 #include <denton/pci.h>
+#include <denton/version.h>
 
 #include <asm/cpuid.h>
 #include <asm/cpu.h>
@@ -78,11 +78,11 @@ void cmain(uint32_t magic, struct multiboot_info* mb_info)
 	}
 
 	terminal_initialize(EARLY_BOOT_VGA);
-
-	klog_info("==< DENTON BOOTING >==\n");
-	klog_info("kernel physical location: 0x%8p-0x%8p\n", 
+#pragma message("Replace with printf when stdout goes somewhere")
+        klog(KLOG_INFO, DENTON_VERSION_SPLASH, DENTON_VERSION_SPLASH_FMT_ARGS);
+	klog_trace("kernel physical location: 0x%8p-0x%8p\n", 
 			(void*)V2P(&__KERNEL_START), (void*)V2P(&__KERNEL_END));
-	klog_info("kernel virtual  location: 0x%8p-0x%8p\n", &__KERNEL_START, &__KERNEL_END);
+	klog_trace("kernel virtual  location: 0x%8p-0x%8p\n", &__KERNEL_START, &__KERNEL_END);
 
 	if (magic == MULTIBOOT_BOOTLOADER_MAGIC) {
 		handle_multiboot_info(mb_info);

@@ -6,7 +6,7 @@ windres = 'i686-elf-windres'
 strip = 'i686-elf-strip'
 
 [host_machine]
-system = 'linux'
-cpu_family = 'i386'
-cpu = 'i386'
+system = 'none'
+cpu_family = 'x86_64'
+cpu = 'i686'
 endian = 'little'

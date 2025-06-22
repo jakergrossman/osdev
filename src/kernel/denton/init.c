@@ -3,25 +3,25 @@
 
 static void init_early(void)
 {
-	klog_info("init: early\n");
+  klog_trace("on entry\n");
 }
 initcall(early, init_early);
 
 static void init_core(void)
 {
-	klog_info("init: core\n");
+  klog_trace("on entry\n");
 }
 initcall(core, init_core);
 
 static void init_subsystem(void)
 {
-	klog_info("init: subsystem\n");
+  klog_trace("on entry\n");
 }
 initcall(subsystem, init_subsystem);
 
 static void init_device(void)
 {
-	klog_info("init: device\n");
+  klog_trace("on entry\n");
 }
 initcall(device, init_device);
 

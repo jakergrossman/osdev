@@ -1,4 +1,4 @@
-#include <denton/lib/min_heap.h>
+#include <denton/libd/min_heap.h>
 #include <stdlib.h>
 
 void __min_heap_init(min_heap_char * heap, void * data, size_t size)

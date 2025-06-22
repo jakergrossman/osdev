@@ -1,1 +1,2 @@
-script_initcall = files('gen_initcall.sh')
+script_initcall = files('gen-initcall.sh')
+script_gitrev = files('gen-gitrev.sh')

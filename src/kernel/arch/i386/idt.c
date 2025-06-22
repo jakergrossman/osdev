@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <sys/cdefs.h>
 #include <stdlib.h>
+#include <inttypes.h>
 
 /* kernel-defined book keeping for IDT entries */
 static struct idt_id idt_ids[256];
@@ -49,16 +50,16 @@ static const char *cpu_exception_name[32] = {
 static void
 unhandled_cpu_exception(struct irq_frame* frame, void* privdata)
 {
-	klog_error( "[ 0.000000 ] ===== Exception: %s(%d)!!! =====\n",
+	klog_error( "[ 0.000000 ] ===== Exception: %s(%"PRIu32")!!! =====\n",
 			cpu_exception_name[frame->intno], frame->intno);
-	klog_error( "[ 0.000000 ] ERR: 0x%08X   EIP: V@%p\n", frame->err, (void *)frame->eip);
-	klog_error( "[ 0.000000 ] EAX: 0x%08X   EBX: 0x%08X\n", frame->eax, frame->ebx);
-	klog_error( "[ 0.000000 ] ECX: 0x%08X   EDX: 0x%08X\n", frame->ecx, frame->edx);
-	klog_error( "[ 0.000000 ] ESI: 0x%08X   EDI: 0x%08X\n", frame->esi, frame->edi);
-	klog_error( "[ 0.000000 ] ESP: 0x%08X   EBP: 0x%08X\n", frame->esp, frame->ebp);
-	klog_error( "[ 0.000000 ] CS:  0x%04X       SS:  0x%04X\n", frame->cs, frame->ss);
-	klog_error( "[ 0.000000 ] DS:  0x%04X       ES:  0x%04X\n", frame->ds, frame->es);
-	klog_error( "[ 0.000000 ] FS:  0x%04X       GS:  0x%04X\n", frame->fs, frame->gs);
+	klog_error( "[ 0.000000 ] ERR: 0x%"PRIx32"   EIP: V@%p\n", frame->err, (void *)frame->eip);
+	klog_error( "[ 0.000000 ] EAX: 0x%"PRIx32"   EBX: 0x%"PRIx32"\n", frame->eax, frame->ebx);
+	klog_error( "[ 0.000000 ] ECX: 0x%"PRIx32"   EDX: 0x%"PRIx32"\n", frame->ecx, frame->edx);
+	klog_error( "[ 0.000000 ] ESI: 0x%"PRIx32"   EDI: 0x%"PRIx32"\n", frame->esi, frame->edi);
+	klog_error( "[ 0.000000 ] ESP: 0x%"PRIx32"   EBP: 0x%"PRIx32"\n", frame->esp, frame->ebp);
+	klog_error( "[ 0.000000 ] CS:  0x%"PRIx16"       SS:  0x%"PRIx16"\n", frame->cs, frame->ss);
+	klog_error( "[ 0.000000 ] DS:  0x%"PRIx16"       ES:  0x%"PRIx16"\n", frame->ds, frame->es);
+	klog_error( "[ 0.000000 ] FS:  0x%"PRIx16"       GS:  0x%"PRIx16"\n", frame->fs, frame->gs);
 
 	terminal_flush();
 

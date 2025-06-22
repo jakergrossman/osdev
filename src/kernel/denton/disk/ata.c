@@ -159,7 +159,7 @@ struct ata_dev {
 static void
 ata_create_disk(struct pci_dev* bus, uint16_t io, uint16_t ctl, uint16_t dma, int interrupt)
 {
-	klog_info("Creating PCI ATA Device, IO Base: 0x%04X, IO Ctrl: 0x%04X, DMA: 0x%04X, IRQ: %d\n",
+	klog_debug("Creating PCI ATA Device, IO Base: 0x%04X, IO Ctrl: 0x%04X, DMA: 0x%04X, IRQ: %d\n",
 	          io, ctl, dma, interrupt);
 }
 
@@ -205,7 +205,7 @@ void ata_detect(void)
 
 static void ata_init(void)
 {
-	klog_info("HI IM HERE\n");
+	klog_debug("HI IM HERE\n");
 }
 initcall_device(ata, ata_init);
 

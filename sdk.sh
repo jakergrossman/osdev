@@ -1,6 +1,8 @@
 #!/bin/sh
 
-set -e
+set -ex
+
+ARCH="${ARCH:-i686-elf}"
 
 # Usage: usage EXIT_CODE
 # Example: usage 0
@@ -53,8 +55,9 @@ sdk_exec() {
 		if in_docker ; then
 			$@
 		else
-			check_docker
-			docker run -it \
+		    check_docker
+                    echo "loading sdk"
+			docker run \
 				-v .:/src \
 				--user="$(id -u):$(id -g)" \
 				-t "${TAG}" \
@@ -62,7 +65,7 @@ sdk_exec() {
 		fi
 }
 
-TAG=osdev
+TAG=docker-osdev-${ARCH}
 CACHE=
 VERBOSE=0
 
@@ -98,11 +101,11 @@ fi
 
 case "${subcmd}" in
 	docker)
-		docker build -t "$TAG" . ${CACHE} $@
+		docker build -t "$TAG" . ${CACHE} --progress=plain $@
 		;;
 
 	setup)
-		sdk_exec meson setup --cross-file=i686-elf build --wipe $@
+		sdk_exec meson setup --cross-file="${ARCH}" build --wipe $@
 		;;
 
 	build)
@@ -116,6 +119,7 @@ case "${subcmd}" in
 			usage 1
 		fi
 
+                
 		sdk_exec sh $@
 		;;
 
@@ -148,6 +152,10 @@ case "${subcmd}" in
 			-no-reboot \
 			-no-shutdown \
 			-cdrom build/denton.iso \
+                        -s \
+                        -d int \
+                        -nographic \
+                        -S \
 			$@
 		;;
 

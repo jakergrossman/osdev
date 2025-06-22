@@ -41,3 +41,8 @@ install_headers(
   'denton/math/minmax.h',
   preserve_path: true,
 )
+
+install_headers(
+  'denton/libd/min_heap.h',
+  preserve_path : true,
+)

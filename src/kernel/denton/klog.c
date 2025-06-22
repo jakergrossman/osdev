@@ -54,14 +54,28 @@ static struct klog_sink klog_recorder = {
 	.write = klog_write,
 };
 
+static const char *klog_level_str(enum klog_level level)
+{
+  switch (level)
+    {
+    case KLOG_TRACE: return "TRACE";
+    case KLOG_DEBUG: return "DEBUG";
+    case KLOG_INFO: return "INFO";
+    case KLOG_WARN: return "WARN";
+    case KLOG_ERROR: return "ERROR";
+    case KLOG_EMERG: return "EMERG";
+    default: return "?????";
+    }
+}
+
 void __klog(const char* funcname, enum klog_level level, const char* fmt, ...)
 {
 	uint32_t millis = timer_get_ms();
 	uint32_t secs = millis / 1000;
 	millis %= 1000;
 
-	char buf[1024];
-	size_t prefix_len = snprintf(buf, sizeof(buf), "[ %4d.%03d ][%s]: ", secs, millis, funcname);
+	char buf[4096];
+	size_t prefix_len = snprintf(buf, sizeof(buf), "[ %4d.%03d ][%s][%s]: ", secs, millis, klog_level_str(level), funcname);
 
 	va_list args;
 	va_start(args, fmt);

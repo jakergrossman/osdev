@@ -3,14 +3,15 @@ FROM alpine:latest AS base
 LABEL maintainer="jak <ahoy@jakergrossman.com>"
 LABEL description="i686-elf GCC+binutils toolchain for osdev"
 
-ENV TARGET="i686-elf" \ 
+ENV ARCH="i686"
+ENV TARGET="${ARCH}-elf" \
     BINUTILS_VERSION="2.44" \
     GCC_VERSION="14.2.0"\
     PKGDIR="/pkg" \
     PREFIX="/usr/local"
 
 RUN apk add --no-cache --virtual .deps \
-    curl file gcc make musl-dev build-base coreutils \
+    curl file gcc make musl-dev build-base coreutils git \
     mpc1-dev gmp-dev mpfr-dev meson grub mtools xorriso
 
 FROM base AS build

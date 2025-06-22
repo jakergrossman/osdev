@@ -19,19 +19,22 @@ kernel_dummy_lib = static_library('__kernel',
   link_args : kernel_link_args,
   link_depends : kernel_arch_linker_script,
   include_directories : [ kernel_inc_dirs, kernel_arch_inc_dirs ],
-  dependencies : [ libk_dep, libgcc ],
+  dependencies : [ libk_dep, libgcc, libd_dep ],
 )
 
-prog_sh = find_program('sh')
 initcall_c = custom_target('initcall.c',
   output : 'initcall.c',
-  input : script_initcall,
-  command : [prog_sh, '@INPUT@', kernel_dummy_lib.full_path(), '@OUTPUT@'],
+  command : [script_initcall, kernel_dummy_lib.full_path(), '@OUTPUT@'],
   depends : kernel_dummy_lib,
 )
 
+version_c = custom_target('version.c',
+  output : 'version.c',
+  command : [script_gitrev, '@OUTPUT@'],
+)
+
 kernel = executable(kernel_image,
-  initcall_c,
+  initcall_c, version_c,
   objects : kernel_dummy_lib.extract_all_objects(recursive : true),
   link_args : kernel_link_args,
   link_depends : kernel_arch_linker_script,

@@ -1,60 +1,27 @@
 # osdev (denton)
 x86 operating system dev fun
 
-## manual build
+## compilation
+denton uses docker to build a cross compilation environment
 
-```sh
-# building i686-elf cross-compile docker toolchain (build machine)
-docker build . -t osdev
-
-# enter interactive cross compile environment (build machine)
-docker run --user=$(id -u):$(id -g) -it -v .:/src osdev sh
-
-# compiling (cross environment)
-meson setup --cross-file=i686-elf build
-meson compile -C build
-
-# sysroot generation (cross environment)
-meson install -C build --destdir=sysroot
-
-# ISO generation (build machine)
-scripts/iso.sh build/sysroot os.iso
-
-# Run QEMU (build machine)
-qemu-system-i386 -no-reboot -no-shutdown -cdrom os.iso
-```
-
-## script build
-A script `sdk.sh` is provided for convenience. Most subcommands
-can be executed inside or outside of the Docker VM and the appropriate
-action is taken accordingly.
+Use the makefile [`osdev.mk`](osdev.mk) to create the build
+environment and compile the operating system:
 
 ```
-Usage: sdk.sh [options] [subcmd]
-
-Options:
-  -c        pass --no-cache to docker build
-  -t        set the tag parameter for the docker image
-  -h        Print this help and exit
-  -v        Print verbosely
+Usage: osdev.mk [subcommand]
 
 Subcommands:
-  docker:   Build the docker image
-  setup:    Setup/clean the Meson build system
-  build:    Build the operating system
-  shell:    Run the docker image interactively
-  sysroot:  Generate a sysroot in the build directory
-  iso:      Generate an ISO image from the generated sysroot
-  qemu:     Run the generated ISO with qemu-system-i386
-  help:     Print this help and exit
+  sdk              create cross-compilation SDK
+  setup            initialize meson build directory
+  compile          compile operating system
+  iso              create ISO image
+  qemu             run operating system with qemu
+  clean            meson clean
+  distclean        delete bin directory
+  help             show this help text
 ```
 
+From zero to QEMU on the build machine:
 ```sh
-# from 0 to QEMU on the the build machine
-./sdk.sh docker
-./sdk.sh setup
-./sdk.sh build
-./sdk.sh sysroot
-./sdk.sh iso
-./sdk.sh qemu
+QEMU=qemu-system-i386 make sdk qemu
 ```

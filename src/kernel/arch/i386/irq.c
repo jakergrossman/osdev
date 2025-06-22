@@ -50,7 +50,7 @@ int irq_register_handler(
 	handler->type = type;
 	handler->irqfn = irqfn;
 
-	klog_info("irq %d, '%s'\n", irqno, handler->name);
+	klog_debug("irq %d, '%s'\n", irqno, handler->name);
 	ret = idt_register_irq_handler(irqno + PIC8259_IRQ0, handler);
 	if (ret) {
 		goto free_name;

@@ -80,7 +80,7 @@ bootmem_add(uint64_t start, uint64_t end)
 		return 0;
 	}
 
-	klog_info("registering region 0x%08llX-0x%08llX, %lldKB\n",
+	klog_trace("registering region 0x%08llX-0x%08llX, %lldKB\n",
 			  start, end, (end - start) / __KiX(1)*1024);
 
 	for (size_t i = last_memregion; i < ARRAY_LENGTH(memregions); i++) {
@@ -129,7 +129,7 @@ void bootmem_setup_pga(void)
 {
 	klog_debug("Initializing page allocator\n");
 	int pages = page_alloc_init(&bootmem_ally, memregions, last_memregion);
-	klog_info("page allocator has %d free pages\n", pages);
+	klog_debug("page allocator has %d free pages\n", pages);
 }
 
 #include "allocator.c"
