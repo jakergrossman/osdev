@@ -10,5 +10,5 @@ add_global_arguments('-Wno-pedantic', '-ffreestanding', '-nostdlib', language : 
 add_global_link_arguments('-ffreestanding', '-nostdlib', language : 'c')
 
 subdir('scripts')
-subdir('src')
-
+subdir('denton')
+subdir('iso')

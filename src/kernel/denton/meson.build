@@ -21,3 +21,4 @@ kernel_c_sources += kernel_c_sched_sources
 
 subdir('sync')
 kernel_c_sources += kernel_c_sync_sources
+

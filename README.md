@@ -1,23 +1,20 @@
 # osdev (denton)
-x86 operating system dev fun
+operating system dev fun
 
 ## compilation
-denton uses docker to build a cross compilation environment
-
-Use the makefile [`osdev.mk`](osdev.mk) to create the build
-environment and compile the operating system:
+denton uses docker to build a cross compilation environment:
 
 ```
-Usage: osdev.mk [subcommand]
+Usage: make [subcommand]
 
 Subcommands:
-  sdk              create cross-compilation SDK
+  sdk              create and import cross-compilation docker image
   setup            initialize meson build directory
   compile          compile operating system
   iso              create ISO image
-  qemu             run operating system with qemu
-  clean            meson clean
-  distclean        delete bin directory
+  clean            delete build objects
+  distclean        delete build directory
+  qemu-<ARCH>      run operating system with qemu-system-<ARCH>
   help             show this help text
 ```
 

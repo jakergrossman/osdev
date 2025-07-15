@@ -48,6 +48,6 @@ FROM base AS sdk
 ENV __OSDEV_ENV__=1
 
 COPY --from=build "$PKGDIR"/usr/local /usr/local
-COPY meson/$TARGET.cross /usr/local/share/meson/cross/$TARGET
+COPY meson-cross/$TARGET.cross /usr/local/share/meson/cross/$TARGET
 WORKDIR /src
 #ENTRYPOINT ["/bin/sh", "-c"]

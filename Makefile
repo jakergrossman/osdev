@@ -20,10 +20,12 @@ all: help
 
 sdk: $(BIN_DIR)/$(SDK) ## create cross-compilation SDK
 
-setup: ## initialize meson build directory
-	$(RUNNER) meson setup --cross-file=$(TARGET) $(BIN_DIR) --wipe
+setup: $(BIN_DIR) $(BIN_DIR)/.setup-stamp ## initialize meson build directory
 
-compile: $(BIN_DIR) ## compile operating system
+$(BIN_DIR):
+	$(RUNNER) meson setup --cross-file=$(TARGET) $(BIN_DIR) --wipe	
+
+compile: $(BIN_DIR)/.setup-stamp $(BIN_DIR) ## compile operating system
 	$(RUNNER) meson compile -C $(BIN_DIR)
 
 sysroot: compile
@@ -32,7 +34,7 @@ sysroot: compile
 iso: sysroot ## create ISO image
 	sh scripts/iso.sh $(BIN_DIR)/sysroot $(ISO)
 
-qemu: iso ## run operating system with qemu
+qemu-%: iso ## run operating system with qemu
 	$(QEMU) -no-reboot -no-shutdown -cdrom $(ISO)
 
 clean: ## meson clean
@@ -52,5 +54,6 @@ $(BIN_DIR)/$(SDK): $(BIN_DIR)
 	docker build --output type=tar,dest=$@ --progress=plain .
 	docker import $@ $(TAG)
 
-$(BIN_DIR):
-	mkdir -p $@
+$(BIN_DIR)/.%-stamp: $(BIN_DIR)
+	touch $@
+

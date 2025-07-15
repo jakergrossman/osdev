@@ -1,3 +1,4 @@
+subdir('include')
 libc_c_srcs = []
 
 subdir('stdio')
