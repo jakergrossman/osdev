@@ -1,8 +1,14 @@
 # osdev (denton)
 operating system dev fun
 
+## requirements
+- docker
+- grub-mkrescue
+
 ## compilation
-denton uses docker to build a cross compilation environment:
+denton uses a Makefile wrapper to:
+- build a Docker image with Meson and a cross compiler
+- build the operating system using the cross compiler with Meson
 
 ```
 Usage: make [subcommand]
@@ -14,7 +20,7 @@ Subcommands:
   iso              create ISO image
   clean            delete build objects
   distclean        delete build directory
-  qemu-<ARCH>      run operating system with qemu-system-<ARCH>
+  qemu             run operating system with qemu-system-<ARCH>
   help             show this help text
 ```
 

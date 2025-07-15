@@ -78,7 +78,6 @@ void cmain(uint32_t magic, struct multiboot_info* mb_info)
 	}
 
 	terminal_initialize(EARLY_BOOT_VGA);
-#pragma message("Replace with printf when stdout goes somewhere")
         klog(KLOG_INFO, DENTON_VERSION_SPLASH, DENTON_VERSION_SPLASH_FMT_ARGS);
 	klog_trace("kernel physical location: 0x%8p-0x%8p\n", 
 			(void*)V2P(&__KERNEL_START), (void*)V2P(&__KERNEL_END));

@@ -9,7 +9,8 @@ ARCH      ?= i686
 TARGET    := $(ARCH)-elf
 TAG       ?= denton-osdev-$(TARGET)
 SDK       := $(TAG)_sdk.tar
-QEMU      ?= # up to you
+
+QEMU      ?= qemu-system-$(ARCH)
 
 RUNNER    := docker run -v .:/src --workdir /src --user=$(shell id -u):$(shell id -g) -t $(TAG)
 
