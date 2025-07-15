@@ -3,7 +3,9 @@ FROM alpine:latest AS base
 LABEL maintainer="jak <ahoy@jakergrossman.com>"
 LABEL description="i686-elf GCC+binutils toolchain for osdev"
 
-ENV ARCH="i686"
+ARG ARCH="aarch64"
+
+ENV ARCH="${ARCH}"
 ENV TARGET="${ARCH}-elf" \
     BINUTILS_VERSION="2.44" \
     GCC_VERSION="14.2.0"\

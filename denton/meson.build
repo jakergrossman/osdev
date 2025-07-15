@@ -3,6 +3,7 @@ subdir('libc')
 subdir('arch')
 subdir('kernel')
 
+cc = meson.get_compiler('c')
 libgcc = cc.find_library('gcc')
 
 kernel_image = 'denton.bin'
