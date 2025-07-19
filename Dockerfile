@@ -4,8 +4,6 @@ LABEL maintainer="jak <ahoy@jakergrossman.com>"
 LABEL description="i686-elf GCC+binutils toolchain for osdev"
 
 ARG ARCH="aarch64"
-
-ENV ARCH="${ARCH}"
 ENV TARGET="${ARCH}-elf" \
     BINUTILS_VERSION="2.44" \
     GCC_VERSION="14.2.0"\
@@ -17,6 +15,7 @@ RUN apk add --no-cache --virtual .deps \
     mpc1-dev gmp-dev mpfr-dev meson grub mtools xorriso
 
 FROM base AS build
+ARG ${ARCH}
 
 WORKDIR /usr/local/src/
 ADD https://ftp.gnu.org/gnu/binutils/binutils-$BINUTILS_VERSION.tar.gz \
@@ -46,6 +45,7 @@ RUN mkdir build-gcc \
     && make --silent DESTDIR="$PKGDIR" install-target-libgcc
 
 FROM base AS sdk
+ARG ARCH=${ARCH}
 
 ENV __OSDEV_ENV__=1
 

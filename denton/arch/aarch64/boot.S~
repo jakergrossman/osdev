@@ -1,0 +1,11 @@
+.section .bootstrap_stack, "aw", @nobits
+stack_bottom:
+.skip 16384
+stack_top:
+
+	.global _start
+_start:
+	ldr x30, =stack_top
+	mov sp, x30
+	bl kmain
+	b .

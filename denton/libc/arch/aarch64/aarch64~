@@ -1,0 +1,5 @@
+  /home/jgrossman/devel/sw/osdev/denton/libc/arch/aarch64:
+  drwxrwxr-x 2 jgrossman jgrossman 4096 Jul 15 00:12 .
+  drwxrwxr-x 4 jgrossman docker    4096 Jul 15 00:12 ..
+  drwxrwxr-x 2 jgrossman jgrossman 4096 Jul 15 00:12 include
+  -rw-rw-r-- 1 jgrossman jgrossman   83 Jul 15 00:12 meson.build

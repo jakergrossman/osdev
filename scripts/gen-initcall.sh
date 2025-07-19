@@ -46,11 +46,11 @@ $(${SCRIPT_DIR}/autogen-notice.sh "$0" "$INITCALL_FILE")
 #include <denton/initcall.h>
 #include <stdlib.h>
 
-$(printf "extern void __init_%s(void);\n" ${initcalls})
+$([ ! -z "${initcalls}" ] && printf "extern void __init_%s(void);\n" ${initcalls})
 
 void (*__initcalls[]) (void) =
 {
-$(printf "\t__init_%s,\n" ${initcalls})
+$([ ! -z "${initcalls}" ] && printf "\t__init_%s,\n" ${initcalls})
 	NULL,
 };
 EOF

@@ -1,6 +1,6 @@
 #! make -f
 
-BIN_DIR   ?= build
+BIN_DIR   ?= build-$(ARCH)
 ISO       ?= $(BIN_DIR)/denton.iso
 
 MAKEFLAGS += --no-print-directory
@@ -12,7 +12,9 @@ SDK       := $(TAG)_sdk.tar
 
 QEMU      ?= qemu-system-$(ARCH)
 
+ifneq (1,$(__OSDEV_ENV__))
 RUNNER    := docker run -v .:/src --workdir /src --user=$(shell id -u):$(shell id -g) -t $(TAG)
+endif
 
 all: help
 
@@ -24,10 +26,13 @@ sdk: $(BIN_DIR)/$(SDK) ## create cross-compilation SDK
 setup: $(BIN_DIR) $(BIN_DIR)/.setup-stamp ## initialize meson build directory
 
 $(BIN_DIR):
-	$(RUNNER) meson setup --cross-file=$(TARGET) $(BIN_DIR) --wipe	
+	mkdir -p $(BIN_DIR)
 
-compile: $(BIN_DIR)/.setup-stamp $(BIN_DIR) ## compile operating system
-	$(RUNNER) meson compile -C $(BIN_DIR)
+setup: $(BIN_DIR)/.setup-stamp
+	$(RUNNER) meson setup --cross-file=$(TARGET) $(BIN_DIR) --reconfigure
+
+compile: setup $(BIN_DIR) ## compile operating system
+	$(RUNNER) meson compile -C $(BIN_DIR) -v
 
 sysroot: compile
 	$(RUNNER) meson install -C $(BIN_DIR) --destdir sysroot
@@ -52,7 +57,7 @@ help: ## show this help text
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "  %-16s %s\n", $$1, $$2}'
 
 $(BIN_DIR)/$(SDK): $(BIN_DIR)
-	docker build --output type=tar,dest=$@ --progress=plain .
+	docker build --build-arg ARCH=$(ARCH) --output type=tar,dest=$@ --progress=plain . $(DOCKERFLAGS)
 	docker import $@ $(TAG)
 
 $(BIN_DIR)/.%-stamp: $(BIN_DIR)
