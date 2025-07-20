@@ -3,7 +3,6 @@ operating system dev fun
 
 ## requirements
 - docker
-- grub-mkrescue
 
 ## compilation
 denton uses a Makefile wrapper to:
